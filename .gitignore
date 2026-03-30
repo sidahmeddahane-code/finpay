@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Environment variables
+backend/.env
+frontend/.env
+frontend/.env.production
+
+# Build output
+frontend/dist/
+
+# Database
+backend/prisma/dev.db
+backend/prisma/dev.db-journal
+
+# Uploads (now on Cloudinary)
+backend/uploads/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db

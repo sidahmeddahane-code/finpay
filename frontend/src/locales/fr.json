@@ -1,0 +1,91 @@
+{
+  "app_name": "FinPay",
+  "app_desc": "Plateforme Citoyenne",
+  
+  "auth": {
+    "login": "Connexion",
+    "register": "Créer un compte",
+    "email": "Adresse Email",
+    "password": "Mot de passe",
+    "no_account": "Pas encore de compte ?",
+    "has_account": "Déjà un compte ?",
+    "invalid_creds": "Identifiants invalides."
+  },
+
+  "menu": {
+    "home": "Accueil",
+    "submit_invoice": "Soumettre Facture",
+    "my_requests": "Mes Demandes",
+    "overview": "Vue d'ensemble",
+    "kyc_validation": "Validations KYC",
+    "invoice_mod": "Modération Factures",
+    "proofs": "Preuves Paiements",
+    "settings": "Comptes FinPay",
+    "logout": "Déconnexion"
+  },
+
+  "dashboard": {
+    "welcome": "Bonjour",
+    "summary": "Résumé de mon compte",
+    "kyc_status": "Statut KYC",
+    "total_financing": "Total Financé",
+    "remaining_debt": "Reste à payer",
+    "recent_activity": "Activité Récente",
+    "no_invoices": "Aucune facture récente."
+  },
+
+  "kyc": {
+    "title": "Déblocage Financement",
+    "desc": "Pour pouvoir demander le financement de vos factures, vous devez d'abord fournir les justificatifs d'identité requis.",
+    "id_number": "Numéro de Pièce d'Identité (NNI)",
+    "id_photo": "Photo de la pièce",
+    "selfie": "Selfie",
+    "submit": "Soumettre la demande",
+    "status_pending": "Demande en cours d'analyse",
+    "status_approved": "Votre identité est vérifiée.",
+    "status_rejected": "Demande refusée. Veuillez réessayer."
+  },
+
+  "invoices": {
+    "submit_title": "Faire payer une facture",
+    "submit_desc": "FinPay règle votre fournisseur immédiatement, et vous nous remboursez en plusieurs fois.",
+    "category": "Catégorie",
+    "provider": "Société / Fournisseur",
+    "ref_number": "Numéro / Référence de la facture",
+    "amount": "Montant Total",
+    "due_date": "Date limite de paiement",
+    "document": "Facture (PDF ou Photo)",
+    "submit_btn": "Envoyer la facture",
+    "my_invoices": "Mes Demandes",
+    "no_data": "Aucune facture soumise pour le moment.",
+    "details": "Détails de la demande",
+    "see_doc": "Voir la facture"
+  },
+
+  "repayment": {
+    "granted": "Financement accordé !",
+    "choose_plan": "FinPay a réglé votre facture. Choisissez votre durée de remboursement :",
+    "months": "Mois",
+    "fees": "Frais",
+    "your_plan": "Votre échéancier",
+    "installment": "Échéance",
+    "due_for": "Pour le",
+    "pay": "Payer",
+    "paid": "Payé",
+    "verifying": "En vérification",
+    "pay_modal_title": "Rembourser l'échéance",
+    "pay_modal_desc": "Veuillez transférer le montant sur l'un de nos comptes et uploader le reçu.",
+    "account": "Comptes d'encaissement FinPay",
+    "proof": "Preuve de transfert",
+    "send_proof": "Transmettre la preuve"
+  },
+
+  "status": {
+    "pending": "En cours d'examen",
+    "approved": "Approuvée",
+    "rejected": "Refusée",
+    "paid_by_admin": "Payée par FinPay",
+    "planned": "Plan en cours",
+    "repaid": "Remboursée"
+  }
+}

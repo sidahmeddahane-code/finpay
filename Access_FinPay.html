@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ouverture de FinPay...</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            max-width: 400px;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4361ee;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4361ee;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+    </style>
+    <script>
+        // Redirection automatique vers l'application locale
+        setTimeout(function() {
+            window.location.href = "http://localhost:5173";
+        }, 1500);
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="loader"></div>
+        <h2>Démarrage de FinPay</h2>
+        <p>Redirection vers votre application locale en cours...</p>
+        <p style="font-size: 0.85rem; color: #666; margin-top: 15px;">
+            Si la redirection ne fonctionne pas, assurez-vous que le serveur Frontend (Vite) est en cours d'exécution.
+        </p>
+        <a href="http://localhost:5173" class="btn">Accéder manuellement</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,158 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String         @id @default(uuid())
+  firstName       String
+  lastName        String
+  phone           String         @unique
+  email           String?        @unique
+  password        String
+  otpCode         String?
+  otpExpiresAt    DateTime?
+  isPhoneVerified Boolean        @default(false)
+  role            String         @default("USER") // USER ou ADMIN
+  status          String         @default("ACTIVE") // ACTIVE, SUSPENDED, BLOCKED
+  creditScore     Int            @default(100) // Score de fiabilité du client
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  kyc             KycVerification?
+  invoices        Invoice[]
+  notifications   Notification[]
+}
+
+model KycVerification {
+  id              String         @id @default(uuid())
+  userId          String         @unique
+  user            User           @relation(fields: [userId], references: [id])
+  idNumber        String
+  idPhotoUrl      String
+  selfieUrl       String
+  status          String         @default("PENDING") // PENDING, APPROVED, REJECTED, INFO_REQUIRED
+  requestedDocs   String?        // e.g "work_cert,address_proof,other"
+  workCertUrl     String?
+  addressProofUrl String?
+  otherDocUrl     String?
+  submittedAt     DateTime       @default(now())
+  reviewedAt      DateTime?
+}
+
+model Invoice {
+  id              String         @id @default(uuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  category        String         // electricity, water, internet, penalty, other
+  provider        String
+  invoiceNumber   String
+  amount          Float
+  dueDate         DateTime
+  documentUrl     String
+  status          String         @default("PENDING") // PENDING, APPROVED, FEE_VERIFYING, READY_TO_PAY, PAID, REJECTED, FULLY_REPAID
+  
+  submittedAt     DateTime       @default(now())
+  approvedAt      DateTime?
+  paidByAdminAt   DateTime?
+  adminPaymentProofUrl String?   // Preuve du paiement de FinPay au fournisseur
+
+  repaymentPlan   RepaymentPlan?
+}
+
+model RepaymentPlan {
+  id              String         @id @default(uuid())
+  invoiceId       String         @unique
+  invoice         Invoice        @relation(fields: [invoiceId], references: [id])
+  durationMonths  Int            // 1, 3, 6, etc.
+  totalAmount     Float          // Original amount + fees
+  feePercentage   Float
+  feePaid         Boolean        @default(false)
+  feeProofUrl     String?        // Preuve du paiement des frais immédiats
+  commitmentSigned Boolean       @default(false) // Engagement de remboursement signé électroniquement
+  status          String         @default("FEE_VERIFYING") // FEE_VERIFYING, ACTIVE, COMPLETED, OVERDUE
+
+  installments    Installment[]
+  createdAt       DateTime       @default(now())
+}
+
+model Installment {
+  id              String         @id @default(uuid())
+  planId          String
+  plan            RepaymentPlan  @relation(fields: [planId], references: [id])
+  amount          Float
+  dueDate         DateTime
+  status          String         @default("PENDING") // PENDING, PAID, LATE
+  penaltyApplied  Float          @default(0)
+
+  payment         Payment?
+}
+
+model Payment {
+  id              String         @id @default(uuid())
+  installmentId   String         @unique
+  installment     Installment    @relation(fields: [installmentId], references: [id])
+  amount          Float
+  method          String         // ID of the method or name
+  proofUrl        String?        // Image of the receipt/screenshot
+  status          String         @default("PENDING") // PENDING (verifying), APPROVED, REJECTED
+  paidAt          DateTime       @default(now())
+  reviewedAt      DateTime?
+}
+
+model PaymentMethod {
+  id              String         @id @default(uuid())
+  name            String         // e.g "Virement Bancaire", "Wave", "Bankily"
+  provider        String         // Nom de la banque ou du portefeuille
+  accountNumber   String         // Numéro de compte ou téléphone
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+}
+
+model Notification {
+  id              String         @id @default(uuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  title           String
+  message         String
+  isRead          Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+}
+
+model Expense {
+  id            String   @id @default(uuid())
+  amount        Float
+  description   String
+  date          DateTime
+  invoiceNumber String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PlatformSettings {
+  id          String   @id @default("1")
+  address     String?
+  phone       String?
+  email       String?
+  whatsapp    String?
+  aboutText   String?
+  updatedAt   DateTime @updatedAt
+}
+
+model AdminActionLog {
+  id          String   @id @default(uuid())
+  adminId     String
+  adminName   String
+  action      String   // e.g. APPROVE_INVOICE, REJECT_KYC, BLOCK_USER
+  targetType  String   // INVOICE, KYC, PAYMENT, USER, PLAN
+  targetId    String
+  details     String?
+  createdAt   DateTime @default(now())
+}
