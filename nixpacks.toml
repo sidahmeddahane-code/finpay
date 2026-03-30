@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs_20", "npm-9_x", "openssl"]
+
+[phases.build]
+cmds = [
+  "cd frontend && npm install && npm run build",
+  "cd backend && npm install && npx prisma generate"
+]
+
+[start]
+cmd = "sh -c 'cd backend && node prisma-push.js && cd .. && node backend/src/index.js'"
