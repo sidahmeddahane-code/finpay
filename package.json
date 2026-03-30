@@ -2,7 +2,7 @@
   "name": "finpay",
   "version": "1.0.0",
   "scripts": {
-    "build": "npm install --prefix frontend && npm run build --prefix frontend && npm install --prefix backend && npx --prefix backend prisma generate",
+    "build": "npm install --prefix frontend && npm run build --prefix frontend && npm install --prefix backend && cd backend && npx prisma generate",
     "start": "node backend/src/index.js"
   },
   "engines": {
