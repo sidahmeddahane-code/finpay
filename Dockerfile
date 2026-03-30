@@ -23,4 +23,4 @@ WORKDIR /app
 EXPOSE 5000
 
 # Push DB schema then start server
-CMD ["sh", "-c", "cd /app/backend && npx prisma db push --accept-data-loss && node src/index.js"]
+CMD ["sh", "-c", "cd /app/backend && node prisma-push.js && cd .. && node backend/src/index.js"]

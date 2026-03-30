@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${PGUSER:-finpayadmin}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-finpay_secure_db_pass_2024}
+      POSTGRES_DB: ${PGDATABASE:-finpaydb}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - finpay_network
+
+  app:
+    build: .
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://${PGUSER:-finpayadmin}:${PGPASSWORD:-finpay_secure_db_pass_2024}@db:5432/${PGDATABASE:-finpaydb}
+      - JWT_SECRET=${JWT_SECRET}
+      - FRONTEND_URL=${FRONTEND_URL:-https://finpay.today}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - NODE_ENV=production
+    depends_on:
+      - db
+    networks:
+      - finpay_network
+
+volumes:
+  postgres_data:
+
+networks:
+  finpay_network:
