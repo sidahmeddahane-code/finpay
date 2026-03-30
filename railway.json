@@ -1,7 +1,11 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS"
+    "nixpacks": false,
+    "providers": ["nodejs"],
+    "nodejs": {
+      "openssl": true
+    }
   },
   "deploy": {
     "startCommand": "sh -c 'cd backend && node prisma-push.js && cd .. && node backend/src/index.js'",
