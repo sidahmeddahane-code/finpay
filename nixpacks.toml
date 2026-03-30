@@ -8,4 +8,4 @@ cmds = [
 ]
 
 [start]
-cmd = "sh -c 'cd backend && npx prisma db push --accept-data-loss && cd .. && node backend/src/index.js'"
+cmd = "sh -c 'cd backend && node prisma-push.js && cd .. && node backend/src/index.js'"
