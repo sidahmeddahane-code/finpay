@@ -15,8 +15,10 @@ WORKDIR /app/backend
 RUN npm install
 RUN npx prisma generate
 
-# Start from root
+# Go back to root
 WORKDIR /app
+
 EXPOSE 5000
 
-CMD ["node", "backend/src/index.js"]
+# Push DB schema then start server
+CMD ["sh", "-c", "cd /app/backend && npx prisma db push --accept-data-loss && node src/index.js"]
