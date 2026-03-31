@@ -10,7 +10,7 @@ const AboutUs = () => {
     useEffect(() => {
         const fetchContact = async () => {
             try {
-                const res = await fetch('/api/settings/contact');
+                const res = await fetch('/api/auth/settings/contact');
                 const data = await res.json();
                 setContact(data);
             } catch (error) {

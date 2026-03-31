@@ -221,7 +221,7 @@ const AdminSettings = () => {
 
   const fetchContact = async () => {
       try {
-          const res = await fetch('/api/settings/contact');
+          const res = await fetch('/api/auth/settings/contact');
           const data = await res.json();
           if (data && Object.keys(data).length > 0) {
               setContactData({
