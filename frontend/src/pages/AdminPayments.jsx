@@ -112,7 +112,12 @@ const AdminPayments = () => {
                        <div style={{ textAlign: 'center' }}>
                          <p style={{ fontSize: '0.8rem', marginBottom: '5px' }}>{t('repayment.proof', 'Preuve')}</p>
                          
-                         {payment.proofUrl ? (
+                         {payment.method && payment.method.startsWith('B2B_API') ? (
+                             <div style={{ padding: '10px', background: 'rgba(56, 189, 248, 0.1)', color: '#0369a1', borderRadius: '8px', border: '1px dashed #38bdf8', fontSize: '0.8rem', maxWidth: '200px' }}>
+                                 <strong>ID Transfert Bancaire:</strong><br/>
+                                 <code style={{ wordBreak: 'break-all' }}>{payment.proofUrl}</code>
+                             </div>
+                         ) : payment.proofUrl ? (
                              payment.proofUrl.toLowerCase().endsWith('.pdf') ? (
                                 <a href={`${payment.proofUrl}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{ height: '80px', display: 'flex', alignItems: 'center', padding: '0 20px' }}>
                                     <ExternalLink size={24} /> Voir PDF
