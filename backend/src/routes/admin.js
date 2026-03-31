@@ -439,6 +439,60 @@ router.put('/settings/contact', auth, isAdmin, async (req, res) => {
 });
 
 // ==========================================
+// B2B PARTNER GATEWAY (API KEYS)
+// ==========================================
+
+const crypto = require('crypto');
+
+router.get('/b2b/partners', auth, isAdmin, async (req, res) => {
+    try {
+        const partners = await prisma.partnerBank.findMany({
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, name: true, contactEmail: true, isActive: true, createdAt: true }
+        });
+        res.json(partners);
+    } catch (error) {
+        res.status(500).json({ error: 'Erreur lors de la récupération des partenaires B2B' });
+    }
+});
+
+router.post('/b2b/partners', auth, isAdmin, async (req, res) => {
+    try {
+        const { name, contactEmail } = req.body;
+        if (!name) return res.status(400).json({ error: 'Le nom du partenaire est requis.' });
+
+        // Generate a plain API key for the bank
+        const plainApiKey = `fp_live_${crypto.randomBytes(24).toString('hex')}`;
+        
+        // Hash it for DB storage
+        const apiKeyHash = crypto.createHash('sha256').update(plainApiKey).digest('hex');
+
+        const partner = await prisma.partnerBank.create({
+            data: { name, contactEmail, apiKeyHash }
+        });
+
+        res.status(201).json({ 
+            message: 'Partenaire B2B créé avec succès!',
+            partner: { id: partner.id, name: partner.name },
+            apiKey: plainApiKey // Important: Only shown once!
+        });
+    } catch (error) {
+        console.error(error);
+        if (error.code === 'P2002') return res.status(400).json({ error: 'Ce nom de partenaire existe déjà.' });
+        res.status(500).json({ error: 'Erreur lors de la création du partenaire B2B' });
+    }
+});
+
+router.delete('/b2b/partners/:id', auth, isAdmin, async (req, res) => {
+    try {
+        await prisma.partnerBank.delete({ where: { id: req.params.id } });
+        res.json({ message: 'Partenaire B2B et ses clés API supprimés.' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erreur lors de la suppression' });
+    }
+});
+
+// ==========================================
 // SUPER ADMIN — ACCOUNT MANAGEMENT
 // ==========================================
 

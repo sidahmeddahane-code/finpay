@@ -14,6 +14,7 @@ import AboutUs from './pages/AboutUs';
 import AdminInvoices from './pages/AdminInvoices';
 import AdminPayments from './pages/AdminPayments';
 import AdminSettings from './pages/AdminSettings';
+import AdminPartners from './pages/AdminPartners';
 import AdminExpenses from './pages/AdminExpenses';
 import AdminUsers from './pages/AdminUsers';
 import AdminLogs from './pages/AdminLogs';
@@ -43,6 +44,7 @@ function App() {
             <Route path="/admin/payments" element={<AdminPayments />} />
             <Route path="/admin/expenses" element={<AdminExpenses />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/partners" element={<AdminPartners />} />
             <Route path="/admin/logs" element={<AdminLogs />} />
           </Route>
 

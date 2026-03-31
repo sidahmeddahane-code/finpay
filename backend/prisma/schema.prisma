@@ -156,3 +156,13 @@ model AdminActionLog {
   details     String?
   createdAt   DateTime @default(now())
 }
+
+model PartnerBank {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  apiKeyHash  String
+  contactEmail String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

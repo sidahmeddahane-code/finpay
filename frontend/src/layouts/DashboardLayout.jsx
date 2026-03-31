@@ -79,6 +79,9 @@ const DashboardLayout = () => {
               <Link to="/admin/settings" className={navItemClass('/admin/settings')} style={{ width: '100%', justifyContent: 'flex-start' }}>
                 <Settings size={18} /> {t('menu.settings', 'Comptes FinPay')}
               </Link>
+              <Link to="/admin/partners" className={navItemClass('/admin/partners')} style={{ width: '100%', justifyContent: 'flex-start', marginTop: '6px', backgroundColor: navItemClass('/admin/partners').includes('btn-primary') ? undefined : '#f0fdfa', borderColor: '#14b8a6', color: navItemClass('/admin/partners').includes('btn-primary') ? undefined : '#0f766e' }}>
+                <Globe size={18} /> Partenaires B2B
+              </Link>
               <Link to="/about" className={navItemClass('/about')} style={{ width: '100%', justifyContent: 'flex-start', marginTop: '15px' }}>
                 <Info size={18} /> {t('menu.about', 'Aperçu À Propos')}
               </Link>
