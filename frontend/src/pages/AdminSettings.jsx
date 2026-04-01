@@ -194,6 +194,95 @@ const AdminAccountSection = () => {
   );
 };
 // ────────────────────────────────────────────────────────────────────────────
+const SuperAdminRepaymentOptions = () => {
+  const [options, setOptions] = useState([]);
+  const [formData, setFormData] = useState({ durationMonths: '', feePercentage: '' });
+  const [loading, setLoading] = useState(false);
+  const token = localStorage.getItem('token');
+
+  const fetchOptions = async () => {
+    const res = await fetch('/api/admin/repayment-options', { headers: { Authorization: `Bearer ${token}` } });
+    if(res.ok) {
+        const data = await res.json();
+        setOptions(data);
+    }
+  };
+
+  useEffect(() => { fetchOptions(); }, []);
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/repayment-options', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        setFormData({ durationMonths: '', feePercentage: '' });
+        fetchOptions();
+      } else {
+        const data = await res.json();
+        alert(data.error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Supprimer cette option ?")) return;
+    await fetch(`/api/admin/repayment-options/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    fetchOptions();
+  };
+
+  return (
+    <div className="surface mt-4" style={{ borderTop: '4px solid #f59e0b', marginTop: '30px' }}>
+      <h3 style={{ color: '#f59e0b', marginBottom: '16px' }}>Options de Remboursement</h3>
+      <p className="mb-4 text-muted">Configurez les durées et pourcentages de frais (ex: 2 mois = 5%). Géré uniquement par le Super Admin.</p>
+      
+      <div className="grid-cols-2" style={{ alignItems: 'flex-start', gap: '30px' }}>
+        <div>
+          <h4 className="mb-3">Ajouter une option</h4>
+          <form onSubmit={handleAdd}>
+            <div className="form-group mb-3">
+              <label className="form-label">Durée (Mois)</label>
+              <input type="number" className="form-input" value={formData.durationMonths} onChange={e => setFormData({...formData, durationMonths: e.target.value})} required placeholder="ex: 2" />
+            </div>
+            <div className="form-group mb-3">
+              <label className="form-label">Frais de service (%)</label>
+              <input type="number" step="0.1" className="form-input" value={formData.feePercentage} onChange={e => setFormData({...formData, feePercentage: e.target.value})} required placeholder="ex: 5.0" />
+            </div>
+            <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>Ajouter l'option</button>
+          </form>
+        </div>
+        
+        <div>
+          <h4 className="mb-3">Options Actives</h4>
+          {options.length === 0 ? <p className="text-muted">Aucune option configurée.</p> : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {options.map(opt => (
+                <div key={opt.id} className="surface flex-between" style={{ padding: '12px 16px' }}>
+                  <div>
+                    <strong>{opt.durationMonths} Mois</strong>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Frais: {opt.feePercentage}%</div>
+                  </div>
+                  <button className="btn btn-outline" style={{ color: 'var(--danger)', borderColor: 'var(--border-color)', padding: '8px' }} onClick={() => handleDelete(opt.id)}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const AdminSettings = () => {
   const [methods, setMethods] = useState([]);
@@ -419,7 +508,12 @@ const AdminSettings = () => {
           const token = localStorage.getItem('token');
           if (!token) return null;
           const payload = JSON.parse(atob(token.split('.')[1]));
-          if (payload.role === 'SUPER_ADMIN') return <AdminAccountSection />;
+          if (payload.role === 'SUPER_ADMIN') return (
+              <>
+                <SuperAdminRepaymentOptions />
+                <AdminAccountSection />
+              </>
+          );
         } catch {}
         return null;
       })()}

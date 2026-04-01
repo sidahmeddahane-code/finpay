@@ -12,6 +12,7 @@ const MyInvoices = () => {
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedInstallment, setSelectedInstallment] = useState(null);
   const [paymentData, setPaymentData] = useState({ method: '', file: null });
+  const [repaymentOptions, setRepaymentOptions] = useState([]);
 
   // States pour la soumission d'un plan (V4)
   const [planForm, setPlanForm] = useState({ duration: 2, method: '', file: null, signed: false });
@@ -51,9 +52,26 @@ const MyInvoices = () => {
     }
   }
 
+  const fetchRepaymentOptions = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/invoices/repayment-options', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      setRepaymentOptions(data);
+      if(data.length > 0) {
+          setPlanForm(prev => ({ ...prev, duration: data[0].durationMonths }));
+      }
+    } catch (err) {
+      console.error('Erreur chargement options:', err);
+    }
+  };
+
   useEffect(() => {
     fetchInvoices();
     fetchPaymentMethods();
+    fetchRepaymentOptions();
   }, []);
 
   const handleAcceptPlan = async (e, invoiceId) => {
@@ -363,23 +381,21 @@ const MyInvoices = () => {
                           <form onSubmit={(e) => handleAcceptPlan(e, invoice.id)}>
                               {/* Sélection de la durée */}
                               <div className="grid-cols-3 mb-3">
-                                  {[
-                                    { d: 2, f: 5 }, 
-                                    { d: 4, f: 10 }, 
-                                    { d: 6, f: 15 }
-                                  ].map(p => (
+                                  {repaymentOptions.length === 0 ? (
+                                      <p style={{ gridColumn: '1 / -1', color: 'var(--text-muted)' }}>Aucun plan disponible actuellement.</p>
+                                  ) : repaymentOptions.map(p => (
                                       <div 
-                                        key={p.d}
-                                        onClick={() => setPlanForm({...planForm, duration: p.d})}
-                                        className={`surface ${planForm.duration === p.d ? 'active-plan' : ''}`} 
+                                        key={p.durationMonths}
+                                        onClick={() => setPlanForm({...planForm, duration: p.durationMonths})}
+                                        className={`surface ${planForm.duration === p.durationMonths ? 'active-plan' : ''}`} 
                                         style={{ 
                                             cursor: 'pointer', padding: '15px', textAlign: 'center', 
-                                            border: planForm.duration === p.d ? '2px solid var(--primary)' : '1px solid var(--border-color)' 
+                                            border: planForm.duration === p.durationMonths ? '2px solid var(--primary)' : '1px solid var(--border-color)' 
                                         }}>
-                                          <h3 style={{ margin: '0 0 5px 0' }}>{p.d} Mois</h3>
-                                          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Frais: {p.f}%</p>
+                                          <h3 style={{ margin: '0 0 5px 0' }}>{p.durationMonths} Mois</h3>
+                                          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Frais: {p.feePercentage}%</p>
                                           <p style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: '2px' }}>
-                                              {((invoice.amount * (p.f / 100)) + 50).toFixed(2)} MRU
+                                              {((invoice.amount * (p.feePercentage / 100)) + 50).toFixed(2)} MRU
                                           </p>
                                           <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0 }}>(+ 50 MRU transaction)</p>
                                       </div>
@@ -401,7 +417,13 @@ const MyInvoices = () => {
 
                               <div className="mb-3">
                                   <label className="form-label">
-                                      Preuve du paiement des frais calculés ci-dessus ({(invoice.amount * (planForm.duration === 2 ? 0.05 : planForm.duration === 4 ? 0.10 : 0.15) + 50).toFixed(2)} MRU)
+                                      Preuve du paiement des frais calculés ci-dessus ({
+                                        (() => {
+                                          const selectedOption = repaymentOptions.find(opt => opt.durationMonths === planForm.duration);
+                                          const feePercent = selectedOption ? selectedOption.feePercentage : 0;
+                                          return ((invoice.amount * (feePercent / 100)) + 50).toFixed(2);
+                                        })()
+                                      } MRU)
                                   </label>
                                   <input 
                                     type="file" 

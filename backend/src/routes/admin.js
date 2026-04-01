@@ -652,4 +652,49 @@ router.delete('/users/:id', auth, isSuperAdmin, async (req, res) => {
   }
 });
 
+// ==========================================
+// SUPER ADMIN — REPAYMENT OPTIONS
+// ==========================================
+router.get('/repayment-options', auth, isSuperAdmin, async (req, res) => {
+  try {
+    const options = await prisma.repaymentOption.findMany({
+      orderBy: { durationMonths: 'asc' }
+    });
+    res.json(options);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur récupération options de remboursement.' });
+  }
+});
+
+router.post('/repayment-options', auth, isSuperAdmin, async (req, res) => {
+  try {
+    const { durationMonths, feePercentage } = req.body;
+    if (!durationMonths || feePercentage === undefined) {
+      return res.status(400).json({ error: 'Durée et pourcentage sont requis.' });
+    }
+    const option = await prisma.repaymentOption.create({
+      data: {
+        durationMonths: parseInt(durationMonths),
+        feePercentage: parseFloat(feePercentage)
+      }
+    });
+    await logAction(req.user.userId, req.user.name || 'Super Admin', 'CREATE_REPAYMENT_OPTION', 'OPTION', option.id, `${durationMonths} Mois - ${feePercentage}%`);
+    res.status(201).json({ message: 'Option créée.', option });
+  } catch (err) {
+    if (err.code === 'P2002') return res.status(400).json({ error: 'Une option avec cette durée existe déjà.' });
+    res.status(500).json({ error: 'Erreur création option.' });
+  }
+});
+
+router.delete('/repayment-options/:id', auth, isSuperAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.repaymentOption.delete({ where: { id } });
+    await logAction(req.user.userId, req.user.name || 'Super Admin', 'DELETE_REPAYMENT_OPTION', 'OPTION', id);
+    res.json({ message: 'Option supprimée.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur suppression option.' });
+  }
+});
+
 module.exports = router;

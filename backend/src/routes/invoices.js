@@ -120,6 +120,19 @@ router.get('/my-invoices', auth, async (req, res) => {
   }
 });
 
+// Récupérer les options de remboursement actives
+router.get('/repayment-options', auth, async (req, res) => {
+  try {
+    const options = await prisma.repaymentOption.findMany({
+      where: { isActive: true },
+      orderBy: { durationMonths: 'asc' }
+    });
+    res.json(options);
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur lors de la récupération des options de remboursement.' });
+  }
+});
+
 // Accepter un plan de remboursement (Soumission des frais et engagement)
 router.post('/:invoiceId/accept-plan', auth, upload.single('feeProof'), async (req, res) => {
     try {
@@ -147,12 +160,14 @@ router.post('/:invoiceId/accept-plan', auth, upload.single('feeProof'), async (r
           return res.status(400).json({ error: 'La facture n\'est pas éligible pour un plan d\'échelonnement ou est déjà en cours de traitement.' });
       }
   
-      // Calcul des frais (ex: 2 mois = 5%, 4 mois = 10%, 6 mois = 15%)
-      let feePercentage = 0;
-      if (durationMonths == 2) feePercentage = 5;
-      else if (durationMonths == 4) feePercentage = 10;
-      else if (durationMonths == 6) feePercentage = 15;
-      else feePercentage = 20;
+      // Validation de la durée et calcul des frais via RepaymentOption
+      const option = await prisma.repaymentOption.findUnique({
+        where: { durationMonths: parseInt(durationMonths) }
+      });
+      if (!option || !option.isActive) {
+          return res.status(400).json({ error: "L'option de remboursement sélectionnée n'est pas valide ou est inactive." });
+      }
+      const feePercentage = option.feePercentage;
       // Le montant total du plan correspond au montant de la facture (intérêts 0%), 
       // car la plateforme se rémunère uniquement avec les frais payés initialement.
       const totalAmount = invoice.amount;
