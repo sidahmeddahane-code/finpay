@@ -72,4 +72,14 @@ app.use((req, res, next) => {
   res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
+// Global JSON error handler (catches Multer errors and all other middleware errors)
+app.use((err, req, res, next) => {
+  console.error('Global error handler:', err.message || err);
+  const status = err.status || err.statusCode || 500;
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'Fichier trop volumineux. Maximum autorisé: 50 MB.' });
+  }
+  res.status(status).json({ error: err.message || 'Une erreur interne est survenue.' });
+});
+
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
