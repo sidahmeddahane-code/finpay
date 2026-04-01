@@ -19,6 +19,9 @@ const PORT = process.env.PORT || 5000;
 // 1. Security headers
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
+// Trust Nginx proxy (required for express-rate-limit behind Nginx)
+app.set('trust proxy', 1);
+
 // 2. Rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
