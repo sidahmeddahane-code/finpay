@@ -26,12 +26,12 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
   fileFilter: (req, file, cb) => {
     const allowed = /jpeg|jpg|png|pdf/;
     const extOk   = allowed.test(path.extname(file.originalname).toLowerCase());
-    const mimeOk  = allowed.test(file.mimetype);
-    if (extOk && mimeOk) return cb(null, true);
+    const mimeOk  = allowed.test(file.mimetype) || file.mimetype.startsWith('image/');
+    if (extOk || mimeOk) return cb(null, true);
     cb(new Error('Seuls les fichiers images (jpeg, jpg, png) et PDF sont acceptés.'));
   },
 });
