@@ -17,7 +17,20 @@ const app  = express();
 const PORT = process.env.PORT || 5000;
 
 // 1. Security headers
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com"],
+      mediaSrc: ["'self'", "blob:", "https://res.cloudinary.com"],
+      connectSrc: ["'self'"],
+    },
+  },
+}));
 
 // Trust Nginx proxy (required for express-rate-limit behind Nginx)
 app.set('trust proxy', 1);
