@@ -226,6 +226,7 @@ const Kyc = () => {
                    <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', marginTop: '5px' }}>
                      {idPhoto ? idPhoto.name : "Recto (JPG/PNG)"}
                    </p>
+                   <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '5px', fontWeight: 500 }}>Max 50 MB</p>
                    <input 
                      id="idUpload" 
                      type="file" 
@@ -251,12 +252,14 @@ const Kyc = () => {
                  >
                    <span style={{ fontSize: '24px', display: 'block', marginBottom: '10px' }}>🤳</span>
                    <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', marginTop: '5px' }}>
-                     {selfie ? selfie.name : "Prenez un selfie clair"}
+                     {selfie ? selfie.name : "Prenez un selfie en direct"}
                    </p>
+                   <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '5px', fontWeight: 500 }}>(Caméra requise • Max 50 MB)</p>
                    <input 
                      id="selfieUpload" 
                      type="file" 
-                     accept=".jpg,.jpeg,.png" 
+                     accept="image/*" 
+                     capture="user"
                      onChange={(e) => setSelfie(e.target.files[0])} 
                      style={{ display: 'none' }} 
                    />
