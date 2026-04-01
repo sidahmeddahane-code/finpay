@@ -98,6 +98,11 @@ router.get('/my-invoices', auth, async (req, res) => {
           include: {
             installments: true
           }
+        },
+        user: {
+          include: {
+            kyc: true
+          }
         }
       },
       orderBy: { submittedAt: 'desc' }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Download, CreditCard, Clock, CheckCircle, ChevronDown, ChevronUp, Upload, X, FileText } from 'lucide-react';
+import { Download, CreditCard, Clock, CheckCircle, ChevronDown, ChevronUp, Upload, X, FileText, FileSignature } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import EngagementDocument from '../components/EngagementDocument';
 
 const MyInvoices = () => {
   const [invoices, setInvoices] = useState([]);
@@ -17,6 +18,7 @@ const MyInvoices = () => {
   // States pour la soumission d'un plan (V4)
   const [planForm, setPlanForm] = useState({ duration: 2, method: '', file: null, signed: false });
   const [receiptInvoice, setReceiptInvoice] = useState(null);
+  const [viewingContract, setViewingContract] = useState(null);
 
   const { t } = useTranslation();
 
@@ -471,7 +473,14 @@ const MyInvoices = () => {
                         <div>
                           <div className="flex-between mb-2">
                              <h4 style={{ margin: 0 }}>{t('repayment.your_plan', 'Votre échéancier')}</h4>
-                             <button onClick={() => setReceiptInvoice(invoice)} className="btn btn-outline" style={{ fontSize: '0.85rem', padding: '6px 12px', color: 'var(--primary)', borderColor: 'var(--primary)' }}>Voir le Reçu (PDF)</button>
+                             <div style={{ display: 'flex', gap: '10px' }}>
+                                 {invoice.repaymentPlan.commitmentSigned && (
+                                     <button onClick={() => setViewingContract(invoice)} className="btn btn-outline" style={{ fontSize: '0.85rem', padding: '6px 12px', display: 'flex', alignItems: 'center' }}>
+                                         <FileSignature size={14} style={{ marginRight: '5px' }} /> Voir le Contrat
+                                     </button>
+                                 )}
+                                 <button onClick={() => setReceiptInvoice(invoice)} className="btn btn-outline" style={{ fontSize: '0.85rem', padding: '6px 12px', color: 'var(--primary)', borderColor: 'var(--primary)' }}>Voir le Reçu (PDF)</button>
+                             </div>
                           </div>
                           <div style={{ background: 'var(--surface-light)', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
                              {invoice.repaymentPlan.installments.map((inst, index) => (
@@ -523,6 +532,15 @@ const MyInvoices = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Fullscreen Document Viewer */}
+      {viewingContract && (
+          <EngagementDocument 
+              user={viewingContract.user} 
+              invoice={viewingContract} 
+              onClose={() => setViewingContract(null)} 
+          />
       )}
     </div>
   );
