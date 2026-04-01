@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Users, FileText, CheckCircle, Clock, DollarSign, AlertTriangle } from 'lucide-react';
+import { Users, FileText, CheckCircle, Clock, DollarSign, AlertTriangle, Download } from 'lucide-react';
 import UserHistoryModal from '../components/UserHistoryModal';
+import { exportToCSV } from '../utils/exportCsv';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [invoices, setInvoices] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [detailModal, setDetailModal] = useState(null); // 'financement' | 'revenus'
 
   useEffect(() => {
     const fetchAdminData = async () => {
@@ -94,10 +96,50 @@ const AdminDashboard = () => {
   // Trier les retardataires par gravité du retard (le plus long retard en premier)
   lateInstallments.sort((a, b) => b.diffDays - a.diffDays);
 
+  const handleExportSummary = () => {
+    const rows = [
+      { 'Indicateur': 'Total Financements', 'Valeur (MRU)': totalFinanced.toFixed(2) },
+      { 'Indicateur': 'Revenus Financiers (Frais + Pénalités)', 'Valeur (MRU)': totalRevenus.toFixed(2) },
+      { 'Indicateur': 'Utilisateurs Inscrits', 'Valeur (MRU)': users.length },
+      { 'Indicateur': 'KYC en attente', 'Valeur (MRU)': pendingKycCount },
+      { 'Indicateur': 'Factures en attente', 'Valeur (MRU)': pendingInvoicesCount },
+      { 'Indicateur': 'Retardataires actifs', 'Valeur (MRU)': lateInstallments.length },
+    ];
+    exportToCSV(rows, 'resume_dashboard_finpay');
+  };
+
+  const handleExportLate = () => {
+    const rows = lateInstallments.map(l => ({
+      'Citoyen': `${l.user?.firstName} ${l.user?.lastName}`,
+      'Téléphone': l.user?.phone || '',
+      'Prestataire': l.invoice?.provider || '',
+      'N° Facture': l.invoice?.invoiceNumber || '',
+      'Mensualité': l.installmentIndex,
+      'Montant Base (MRU)': l.amountBase?.toFixed(2) || '',
+      'Pénalité (MRU)': l.penalty?.toFixed(2) || '',
+      'Total Dû (MRU)': (l.amountBase + l.penalty)?.toFixed(2) || '',
+      'Date Échéance': l.dueDate ? new Date(l.dueDate).toLocaleDateString() : '',
+      'Jours de Retard': l.diffDays,
+    }));
+    exportToCSV(rows, 'retardataires_finpay');
+  };
+
   return (
     <div className="animate-fade-in">
-      <h1 className="mb-2" style={{ color: 'var(--danger)' }}>Dashboard Administrateur</h1>
-      <p className="mb-4" style={{ color: 'var(--text-muted)' }}>Vue d'ensemble de l'activité de la plateforme FinPay.</p>
+      <div className="flex-between mb-4">
+        <div>
+          <h1 className="mb-2" style={{ color: 'var(--danger)' }}>Dashboard Administrateur</h1>
+          <p style={{ color: 'var(--text-muted)' }}>Vue d'ensemble de l'activité de la plateforme FinPay.</p>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={handleExportSummary} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+            <Download size={16} /> Résumé CSV
+          </button>
+          <button onClick={handleExportLate} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', color: 'var(--danger)', borderColor: 'var(--danger)' }}>
+            <Download size={16} /> Retardataires CSV
+          </button>
+        </div>
+      </div>
 
       {/* KPIs Grid */}
       <div className="grid-cols-4 mb-4">
@@ -107,7 +149,10 @@ const AdminDashboard = () => {
                 <FileText color="var(--primary)" size={20} />
             </div>
             <h2 style={{ fontSize: '1.8rem', margin: '10px 0' }}>{totalFinanced.toFixed(2)} MRU</h2>
-            <p style={{ fontSize: '0.8rem' }} className="badge badge-primary">Volume accordé</p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <p style={{ fontSize: '0.8rem' }} className="badge badge-primary">Volume accordé</p>
+              <button onClick={() => setDetailModal('financement')} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}>Voir Détails</button>
+            </div>
          </div>
 
          <div className="surface" style={{ borderTop: '4px solid var(--success)' }}>
@@ -116,7 +161,10 @@ const AdminDashboard = () => {
                 <DollarSign color="var(--success)" size={20} />
              </div>
             <h2 style={{ fontSize: '1.8rem', margin: '10px 0', color: 'var(--success)' }}>{totalRevenus.toFixed(2)} MRU</h2>
-            <p style={{ fontSize: '0.8rem' }} className="badge badge-success">Frais de service & Pénalités</p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <p style={{ fontSize: '0.8rem' }} className="badge badge-success">Frais de service &amp; Pénalités</p>
+              <button onClick={() => setDetailModal('revenus')} style={{ background: 'none', border: 'none', color: 'var(--success)', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}>Voir Détails</button>
+            </div>
          </div>
 
          <div className="surface" style={{ borderTop: '4px solid var(--warning)' }}>
@@ -185,6 +233,115 @@ const AdminDashboard = () => {
           </div>
       </div>
       {selectedUserId && <UserHistoryModal userId={selectedUserId} onClose={() => setSelectedUserId(null)} />}
+
+      {/* Detail Modal for KPI Cards */}
+      {detailModal && (() => {
+        const isFinancement = detailModal === 'financement';
+        const modalInvoices = isFinancement
+          ? invoices.filter(i => ['PAID', 'PLANNED', 'FULLY_REPAID'].includes(i.status))
+          : invoices.filter(i => i.repaymentPlan?.feePaid);
+
+        const exportDetail = () => {
+          if (isFinancement) {
+            const rows = modalInvoices.map(inv => ({
+              'N\u00b0 Facture': inv.invoiceNumber || '',
+              'Citoyen': `${inv.user?.firstName} ${inv.user?.lastName}`,
+              'T\u00e9l\u00e9phone': inv.user?.phone || '',
+              'Prestataire': inv.provider || '',
+              'Montant Financ\u00e9 (MRU)': inv.amount?.toFixed(2) || '',
+              'Dur\u00e9e Plan (mois)': inv.repaymentPlan?.durationMonths || '',
+              'Date': new Date(inv.submittedAt).toLocaleDateString(),
+            }));
+            exportToCSV(rows, 'detail_financements_finpay');
+          } else {
+            const rows = modalInvoices.map(inv => {
+              const frais = ((inv.amount * (inv.repaymentPlan?.feePercentage || 0)) / 100);
+              const penalites = inv.repaymentPlan?.installments
+                ?.filter(i => i.status === 'PAID')
+                .reduce((s, i) => s + (i.penaltyApplied || 0), 0) || 0;
+              return {
+                'N\u00b0 Facture': inv.invoiceNumber || '',
+                'Citoyen': `${inv.user?.firstName} ${inv.user?.lastName}`,
+                'T\u00e9l\u00e9phone': inv.user?.phone || '',
+                'Montant Facture (MRU)': inv.amount?.toFixed(2) || '',
+                'Frais (%)': inv.repaymentPlan?.feePercentage || '',
+                'Frais Per\u00e7us (MRU)': frais.toFixed(2),
+                'P\u00e9nalit\u00e9s Per\u00e7ues (MRU)': penalites.toFixed(2),
+                'Total Revenus (MRU)': (frais + penalites).toFixed(2),
+              };
+            });
+            exportToCSV(rows, 'detail_revenus_finpay');
+          }
+        };
+
+        return (
+          <div onClick={() => setDetailModal(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div onClick={e => e.stopPropagation()} className="surface animate-fade-in" style={{ width: '100%', maxWidth: '900px', maxHeight: '80vh', overflowY: 'auto', position: 'relative' }}>
+              <div className="flex-between mb-4">
+                <h2 style={{ margin: 0, color: isFinancement ? 'var(--primary)' : 'var(--success)' }}>
+                  {isFinancement ? '📊 Détail des Financements' : '💰 Détail des Revenus'}
+                </h2>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={exportDetail} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Download size={16} /> Télécharger CSV
+                  </button>
+                  <button onClick={() => setDetailModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.5rem', color: 'var(--text-muted)' }}>✕</button>
+                </div>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <thead>
+                  <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-color)' }}>
+                    {isFinancement ? (
+                      <>
+                        <th style={{ padding: '10px', textAlign: 'left' }}>Citoyen</th>
+                        <th style={{ padding: '10px', textAlign: 'left' }}>N° Facture</th>
+                        <th style={{ padding: '10px', textAlign: 'left' }}>Prestataire</th>
+                        <th style={{ padding: '10px', textAlign: 'right' }}>Montant (MRU)</th>
+                        <th style={{ padding: '10px', textAlign: 'center' }}>Plan</th>
+                        <th style={{ padding: '10px', textAlign: 'left' }}>Date</th>
+                      </>
+                    ) : (
+                      <>
+                        <th style={{ padding: '10px', textAlign: 'left' }}>Citoyen</th>
+                        <th style={{ padding: '10px', textAlign: 'left' }}>N° Facture</th>
+                        <th style={{ padding: '10px', textAlign: 'right' }}>Frais Perçus (MRU)</th>
+                        <th style={{ padding: '10px', textAlign: 'right' }}>Pénalités (MRU)</th>
+                        <th style={{ padding: '10px', textAlign: 'right', color: 'var(--success)' }}>Total (MRU)</th>
+                      </>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {modalInvoices.map(inv => {
+                    const frais = ((inv.amount * (inv.repaymentPlan?.feePercentage || 0)) / 100);
+                    const penalites = inv.repaymentPlan?.installments?.filter(i => i.status === 'PAID').reduce((s, i) => s + (i.penaltyApplied || 0), 0) || 0;
+                    return (
+                      <tr key={inv.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <td style={{ padding: '10px' }}><span onClick={() => setSelectedUserId(inv.user?.id)} style={{ cursor: 'pointer', color: 'var(--primary)', textDecoration: 'underline' }}>{inv.user?.firstName} {inv.user?.lastName}</span></td>
+                        <td style={{ padding: '10px', color: 'var(--text-muted)' }}>{inv.invoiceNumber}</td>
+                        {isFinancement ? (
+                          <>
+                            <td style={{ padding: '10px' }}>{inv.provider}</td>
+                            <td style={{ padding: '10px', textAlign: 'right', fontWeight: 600 }}>{inv.amount?.toFixed(2)}</td>
+                            <td style={{ padding: '10px', textAlign: 'center' }}>{inv.repaymentPlan?.durationMonths || '—'} mois</td>
+                            <td style={{ padding: '10px', color: 'var(--text-muted)' }}>{new Date(inv.submittedAt).toLocaleDateString()}</td>
+                          </>
+                        ) : (
+                          <>
+                            <td style={{ padding: '10px', textAlign: 'right' }}>{frais.toFixed(2)}</td>
+                            <td style={{ padding: '10px', textAlign: 'right', color: 'var(--danger)' }}>{penalites.toFixed(2)}</td>
+                            <td style={{ padding: '10px', textAlign: 'right', fontWeight: 600, color: 'var(--success)' }}>{(frais + penalites).toFixed(2)}</td>
+                          </>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

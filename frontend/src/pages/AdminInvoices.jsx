@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Download, Check, X, CreditCard } from 'lucide-react';
 import UserHistoryModal from '../components/UserHistoryModal';
 import { useTranslation } from 'react-i18next';
+import { exportToCSV } from '../utils/exportCsv';
 
 const AdminInvoices = () => {
   const [invoices, setInvoices] = useState([]);
@@ -28,6 +29,25 @@ const AdminInvoices = () => {
   useEffect(() => {
     fetchInvoices();
   }, []);
+
+  const handleExport = () => {
+    const rows = invoices.map(inv => ({
+      'N° Facture': inv.invoiceNumber || '',
+      'Prestataire': inv.provider || '',
+      'Catégorie': inv.category || '',
+      'Montant (MRU)': inv.amount?.toFixed(2) || '',
+      'Statut': inv.status || '',
+      'Utilisateur': `${inv.user?.firstName || ''} ${inv.user?.lastName || ''}`.trim(),
+      'Téléphone': inv.user?.phone || '',
+      'Email': inv.user?.email || '',
+      'Plan (mois)': inv.repaymentPlan?.durationMonths || '',
+      'Frais (%)': inv.repaymentPlan?.feePercentage || '',
+      'Total Remboursé (MRU)': inv.repaymentPlan?.totalAmount?.toFixed(2) || '',
+      'Date Soumission': new Date(inv.submittedAt).toLocaleDateString(),
+      'Date Échéance': inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '',
+    }));
+    exportToCSV(rows, 'factures_finpay');
+  };
 
   const handleReview = async (invoiceId, status) => {
     if (!window.confirm(`Êtes-vous sûr de vouloir ${status === 'APPROVED' ? 'approuver' : 'refuser'} cette facture ?`)) return;
@@ -108,8 +128,15 @@ const AdminInvoices = () => {
 
   return (
     <div className="animate-fade-in">
-      <h1 className="mb-2" style={{ color: 'var(--primary)' }}>{t('menu.admin_invoices', 'Modération des Factures')}</h1>
-      <p className="mb-4" style={{ color: 'var(--text-muted)' }}>{t('kyc.admin_desc', 'Examinez, validez et procédez au paiement des prestataires pour le compte des citoyens.')}</p>
+      <div className="flex-between mb-4">
+        <div>
+          <h1 className="mb-2" style={{ color: 'var(--primary)' }}>{t('menu.admin_invoices', 'Modération des Factures')}</h1>
+          <p style={{ color: 'var(--text-muted)' }}>{t('kyc.admin_desc', 'Examinez, validez et procédez au paiement des prestataires pour le compte des citoyens.')}</p>
+        </div>
+        <button onClick={handleExport} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+          <Download size={16} /> Exporter CSV
+        </button>
+      </div>
 
       {invoices.length === 0 ? (
           <p>{t('invoices.no_data', 'Aucune facture soumise.')}</p>

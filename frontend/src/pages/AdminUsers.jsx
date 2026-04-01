@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, ShieldOff, Shield, Trash2 } from 'lucide-react';
+import { Users, Search, ShieldOff, Shield, Trash2, Download } from 'lucide-react';
 import UserHistoryModal from '../components/UserHistoryModal';
+import { exportToCSV } from '../utils/exportCsv';
 
 const isSuperAdmin = () => {
   try {
@@ -34,6 +35,22 @@ const AdminUsers = () => {
     };
 
     useEffect(() => { fetchUsers(); }, []);
+
+    const handleExport = () => {
+        const rows = filteredUsers.map(u => ({
+            'Prénom': u.firstName || '',
+            'Nom': u.lastName || '',
+            'Email': u.email || '',
+            'Téléphone': u.phone || '',
+            'Statut Compte': u.status || '',
+            'Statut KYC': u.kyc?.status || 'Non soumis',
+            'Numéro ID': u.kyc?.idNumber || '',
+            'Factures': u._count?.invoices || 0,
+            'Score Crédit': u.creditScore || 0,
+            'Date Inscription': new Date(u.createdAt).toLocaleDateString(),
+        }));
+        exportToCSV(rows, 'utilisateurs_finpay');
+    };
 
     const handleBlock = async (id) => {
         const token = localStorage.getItem('token');
@@ -79,17 +96,22 @@ const AdminUsers = () => {
                     <p style={{ color: 'var(--text-muted)' }}>Consultez la liste des inscrits, leur historique et statut KYC.</p>
                 </div>
                 
-                {/* Barre de recherche */}
-                <div style={{ position: 'relative', width: '300px' }}>
-                    <input 
-                        type="text" 
-                        placeholder="Rechercher (nom, tél, email)..." 
-                        className="form-input" 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ paddingLeft: '40px' }}
-                    />
-                    <Search size={18} style={{ position: 'absolute', left: '12px', top: '10px', color: 'var(--text-muted)' }} />
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    {/* Barre de recherche */}
+                    <div style={{ position: 'relative', width: '260px' }}>
+                        <input 
+                            type="text" 
+                            placeholder="Rechercher (nom, tél, email)..." 
+                            className="form-input" 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{ paddingLeft: '40px' }}
+                        />
+                        <Search size={18} style={{ position: 'absolute', left: '12px', top: '10px', color: 'var(--text-muted)' }} />
+                    </div>
+                    <button onClick={handleExport} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                        <Download size={16} /> Exporter CSV
+                    </button>
                 </div>
             </div>
 
