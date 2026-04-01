@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, Upload, UserCheck, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Upload, UserCheck, AlertCircle, Camera } from 'lucide-react';
 
 const Kyc = () => {
   const [formData, setFormData] = useState({ idNumber: '' });
@@ -10,8 +10,62 @@ const Kyc = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  // WebRTC Camera State
+  const [cameraActive, setCameraActive] = useState(false);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
   
   const navigate = useNavigate();
+
+  // Cleanup camera when unmounting
+  useEffect(() => {
+    return () => stopCamera();
+  }, []);
+
+  const startCamera = async () => {
+    setError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      streamRef.current = stream;
+      setCameraActive(true);
+      // Let React render <video> before setting srcObject
+      setTimeout(() => {
+        if (videoRef.current) videoRef.current.srcObject = stream;
+      }, 100);
+    } catch (err) {
+      setError("Erreur : Impossible d'accéder à la caméra. Veuillez autoriser l'accès dans votre navigateur.");
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setCameraActive(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const file = new File([blob], `selfie_${Date.now()}.png`, { type: 'image/png' });
+          setSelfie(file);
+          stopCamera();
+        }
+      }, 'image/png');
+    }
+  };
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -243,26 +297,54 @@ const Kyc = () => {
                    style={{ 
                      border: '2px dashed var(--border-color)', 
                      borderRadius: 'var(--border-radius)', 
-                     padding: '30px 20px', 
+                     padding: cameraActive ? '10px' : '30px 20px', 
                      textAlign: 'center',
-                     cursor: 'pointer',
-                     height: '100%'
+                     height: '100%',
+                     display: 'flex',
+                     flexDirection: 'column',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     background: cameraActive ? '#000' : 'transparent',
+                     overflow: 'hidden',
+                     position: 'relative'
                    }}
-                   onClick={() => document.getElementById('selfieUpload').click()}
                  >
-                   <span style={{ fontSize: '24px', display: 'block', marginBottom: '10px' }}>🤳</span>
-                   <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', marginTop: '5px' }}>
-                     {selfie ? selfie.name : "Prenez un selfie en direct"}
-                   </p>
-                   <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '5px', fontWeight: 500 }}>(Caméra requise • Max 50 MB)</p>
-                   <input 
-                     id="selfieUpload" 
-                     type="file" 
-                     accept="image/*" 
-                     capture="user"
-                     onChange={(e) => setSelfie(e.target.files[0])} 
-                     style={{ display: 'none' }} 
-                   />
+                   {cameraActive ? (
+                     <>
+                       <video 
+                         ref={videoRef} 
+                         autoPlay 
+                         playsInline 
+                         style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '8px' }}
+                       />
+                       <canvas ref={canvasRef} style={{ display: 'none' }} />
+                       <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                         <button type="button" onClick={capturePhoto} className="btn btn-primary" style={{ padding: '8px 16px' }}>📸 Prendre</button>
+                         <button type="button" onClick={stopCamera} className="btn btn-outline" style={{ padding: '8px 16px', color: '#fff', borderColor: '#fff' }}>Annuler</button>
+                       </div>
+                     </>
+                   ) : selfie ? (
+                     <>
+                       <span style={{ fontSize: '24px', display: 'block', marginBottom: '10px' }}>✅</span>
+                       <p style={{ fontSize: '0.85rem', color: 'var(--success)', marginTop: '5px', fontWeight: 'bold' }}>
+                         Selfie Capturé avec succès
+                       </p>
+                       <button type="button" onClick={() => { setSelfie(null); startCamera(); }} className="btn btn-outline" style={{ marginTop: '10px', padding: '5px 10px', fontSize: '0.8rem' }}>
+                         Reprendre
+                       </button>
+                     </>
+                   ) : (
+                     <>
+                       <span style={{ fontSize: '24px', display: 'block', marginBottom: '10px' }}>🤳</span>
+                       <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', marginTop: '5px' }}>
+                         Prenez un selfie en direct
+                       </p>
+                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '5px', fontWeight: 500 }}>(Caméra requise)</p>
+                       <button type="button" onClick={startCamera} className="btn btn-primary" style={{ marginTop: '15px', padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px', margin: '15px auto 0' }}>
+                         <Camera size={16} /> Démarrer Caméra
+                       </button>
+                     </>
+                   )}
                  </div>
              </div>
           </div>
