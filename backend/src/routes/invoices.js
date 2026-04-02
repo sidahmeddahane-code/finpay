@@ -249,8 +249,8 @@ router.post('/:invoiceId/accept-plan', auth, upload.single('feeProof'), async (r
   
       // Validation de la durée et calcul des frais via RepaymentOption
       const durationInt = parseInt(duration);
-      const option = await prisma.repaymentOption.findUnique({
-        where: { duration_durationType: { duration: durationInt, durationType } }
+      const option = await prisma.repaymentOption.findFirst({
+        where: { duration: durationInt, durationType }
       });
       if (!option || !option.isActive) {
           return res.status(400).json({ error: "L'option de remboursement sélectionnée n'est pas valide ou est inactive." });
