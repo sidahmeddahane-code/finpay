@@ -50,8 +50,8 @@ const AdminDashboard = () => {
   invoices.forEach(inv => {
       const plan = inv.repaymentPlan;
       if (plan && plan.feePaid) {
-          // Frais de service = pourcentage du montant initial
-          totalRevenus += (inv.amount * plan.feePercentage) / 100;
+          // Frais de service = pourcentage du montant initial + 50 MRU frais fixes de transaction
+          totalRevenus += ((inv.amount * plan.feePercentage) / 100) + 50;
           
           // Pénalités payées (penaltyApplied sur un installment qui a le statut PAID)
           plan.installments?.forEach(inst => {

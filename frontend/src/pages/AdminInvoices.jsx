@@ -235,7 +235,7 @@ const AdminInvoices = () => {
                            <div style={{ background: 'rgba(248, 150, 30, 0.05)', padding: '15px', borderRadius: 'var(--border-radius-sm)', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid rgba(248, 150, 30, 0.2)' }}>
                                 <div>
                                     <p style={{ margin: 0, fontWeight: 500, color: '#f8961e' }}>Vérification des Frais Initiaux Requis</p>
-                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Durée: {invoice.repaymentPlan.duration} {invoice.repaymentPlan.durationType === 'DAYS' ? 'Jours' : 'Mois'} | Frais: {invoice.repaymentPlan.feePercentage}% ({((invoice.amount * invoice.repaymentPlan.feePercentage) / 100).toFixed(2)} MRU)</p>
+                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Durée: {invoice.repaymentPlan.duration} {invoice.repaymentPlan.durationType === 'DAYS' ? 'Jours' : 'Mois'} | Frais: {invoice.repaymentPlan.feePercentage}% ({(((invoice.amount * invoice.repaymentPlan.feePercentage) / 100) + 50).toFixed(2)} MRU incluant 50 MRU de frais fixes)</p>
                                 </div>
                                
                                <div style={{ display: 'flex', gap: '10px' }}>
