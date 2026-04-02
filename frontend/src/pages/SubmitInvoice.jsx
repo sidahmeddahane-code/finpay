@@ -15,6 +15,8 @@ const SubmitInvoice = () => {
   const [file, setFile] = useState(null);
   const [otpCode, setOtpCode] = useState('');
   const [otpMethod, setOtpMethod] = useState('sms'); // 'sms' or 'email'
+  const [repaymentOptions, setRepaymentOptions] = useState([]);
+  const [selectedPlan, setSelectedPlan] = useState(null);
   
   const [kycStatus, setKycStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +43,22 @@ const SubmitInvoice = () => {
         setLoading(false);
       }
     };
+    const fetchOptions = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/invoices/repayment-options', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        setRepaymentOptions(data);
+        if(data.length > 0) setSelectedPlan({ duration: data[0].duration, durationType: data[0].durationType });
+      } catch (err) {
+        console.error('Erreur chargement options:', err);
+      }
+    };
+    
     checkKyc();
+    fetchOptions();
   }, []);
 
   const handleChange = (e) => {
@@ -62,6 +79,10 @@ const SubmitInvoice = () => {
 
     if (!file) {
       return setError('Veuillez joindre une copie de la facture.');
+    }
+    
+    if (!selectedPlan) {
+      return setError('Veuillez sélectionner un plan de remboursement.');
     }
 
     setSubmitting(true);
@@ -98,6 +119,8 @@ const SubmitInvoice = () => {
       Object.keys(formData).forEach(key => data.append(key, formData[key]));
       data.append('invoiceDocument', file);
       data.append('otpCode', otpCode); // Ajout de l'OTP
+      data.append('requestedDuration', selectedPlan.duration);
+      data.append('requestedDurationType', selectedPlan.durationType);
 
       const token = localStorage.getItem('token');
       const res = await fetch('/api/invoices/submit', {
@@ -273,6 +296,35 @@ const SubmitInvoice = () => {
                   style={{ display: 'none' }} 
                 />
               </div>
+            </div>
+
+            <div className="form-group mt-4 mb-4">
+               <label className="form-label">Choisissez un plan de remboursement :</label>
+               <div className="grid-cols-3 mb-3">
+                   {repaymentOptions.length === 0 ? (
+                       <p style={{ color: 'var(--text-muted)' }}>Aucun plan disponible actuellement.</p>
+                   ) : repaymentOptions.map(p => (
+                       <div 
+                         key={p.id}
+                         onClick={() => setSelectedPlan({ duration: p.duration, durationType: p.durationType })}
+                         className={`surface ${selectedPlan?.duration === p.duration && selectedPlan?.durationType === p.durationType ? 'active-plan' : ''}`} 
+                         style={{ 
+                             cursor: 'pointer', padding: '15px', textAlign: 'center', 
+                             border: selectedPlan?.duration === p.duration && selectedPlan?.durationType === p.durationType ? '2px solid var(--primary)' : '1px solid var(--border-color)' 
+                         }}>
+                           <h3 style={{ margin: '0 0 5px 0' }}>{p.duration} {p.durationType === 'DAYS' ? 'Jours' : 'Mois'}</h3>
+                           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Frais: {p.feePercentage}%</p>
+                           {formData.amount && !isNaN(formData.amount) && (
+                               <div>
+                                   <p style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: '2px' }}>
+                                       {((parseFloat(formData.amount) * (p.feePercentage / 100)) + 50).toFixed(2)} MRU
+                                   </p>
+                                   <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0 }}>(à payer après validation)</p>
+                               </div>
+                           )}
+                       </div>
+                   ))}
+               </div>
             </div>
 
             <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>

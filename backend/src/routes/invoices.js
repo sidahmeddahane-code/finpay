@@ -63,7 +63,7 @@ router.post('/send-submit-otp', auth, async (req, res) => {
 router.post('/submit', auth, upload.single('invoiceDocument'), async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { category, provider, invoiceNumber, amount, dueDate, otpCode } = req.body;
+    const { category, provider, invoiceNumber, amount, dueDate, otpCode, requestedDuration, requestedDurationType } = req.body;
 
     if (!otpCode) {
       return res.status(400).json({ error: 'Le code de vérification SMS est requis.' });
@@ -101,7 +101,9 @@ router.post('/submit', auth, upload.single('invoiceDocument'), async (req, res) 
         invoiceNumber,
         amount: parseFloat(amount),
         dueDate: new Date(dueDate),
-        documentUrl
+        documentUrl,
+        requestedDuration: requestedDuration ? parseInt(requestedDuration) : null,
+        requestedDurationType: requestedDurationType || null
       }
     });
 

@@ -88,7 +88,7 @@ const MyInvoices = () => {
     fetchProfile();
   }, []);
 
-  const handleAcceptPlan = async (e, invoiceId) => {
+  const handleAcceptPlan = async (e, invoice) => {
     e.preventDefault();
     if (!planForm.file) {
         return alert("Veuillez joindre la preuve de paiement des frais.");
@@ -100,14 +100,18 @@ const MyInvoices = () => {
     setActionLoading(true);
     try {
       const formData = new FormData();
-      formData.append('duration', planForm.duration);
-      formData.append('durationType', planForm.durationType);
+      
+      let option = repaymentOptions.find(opt => opt.duration === invoice.requestedDuration && opt.durationType === invoice.requestedDurationType);
+      if (!option && repaymentOptions.length > 0) option = repaymentOptions[0];
+      
+      formData.append('duration', option ? option.duration : planForm.duration);
+      formData.append('durationType', option ? option.durationType : planForm.durationType);
       formData.append('method', planForm.method);
       formData.append('feeProof', planForm.file);
       formData.append('commitmentSigned', planForm.signed);
 
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/invoices/${invoiceId}/accept-plan`, {
+      const res = await fetch(`/api/invoices/${invoice.id}/accept-plan`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -453,34 +457,38 @@ const MyInvoices = () => {
                         </div>
                       )}
 
-                      {/* Cas 1: L'admin a approuvé la facture, l'utilisateur doit choisir un plan et payer les 10% */}
+                      {/* Cas 1: L'admin a approuvé la facture, l'utilisateur doit payer les frais du plan choisi lors de la soumission */}
                       {invoice.status === 'APPROVED' && !invoice.repaymentPlan && userProfile?.isPhoneVerified && (
                         <div style={{ background: 'var(--surface-light)', padding: '20px', borderRadius: 'var(--border-radius)', border: '1px solid var(--primary-light)' }}>
                           <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>{t('repayment.granted', 'Financement pré-approuvé !')}</h4>
-                          <p style={{ fontSize: '0.9rem', marginBottom: '15px' }}>{t('repayment.choose_plan', 'Choisissez votre durée et payez les frais initiaux pour débloquer le financement :')}</p>
+                          <p style={{ fontSize: '0.9rem', marginBottom: '15px' }}>Votre facture est approuvée. Voici le plan que vous avez sélectionné. Payez les frais initiaux pour débloquer le financement :</p>
                           
-                          <form onSubmit={(e) => handleAcceptPlan(e, invoice.id)}>
-                              {/* Sélection de la durée */}
-                              <div className="grid-cols-3 mb-3">
-                                  {repaymentOptions.length === 0 ? (
-                                      <p style={{ gridColumn: '1 / -1', color: 'var(--text-muted)' }}>Aucun plan disponible actuellement.</p>
-                                  ) : repaymentOptions.map(p => (
-                                      <div 
-                                        key={p.id}
-                                        onClick={() => setPlanForm({...planForm, duration: p.duration, durationType: p.durationType})}
-                                        className={`surface ${planForm.duration === p.duration && planForm.durationType === p.durationType ? 'active-plan' : ''}`} 
-                                        style={{ 
-                                            cursor: 'pointer', padding: '15px', textAlign: 'center', 
-                                            border: planForm.duration === p.duration && planForm.durationType === p.durationType ? '2px solid var(--primary)' : '1px solid var(--border-color)' 
-                                        }}>
-                                          <h3 style={{ margin: '0 0 5px 0' }}>{p.duration} {p.durationType === 'DAYS' ? 'Jours' : 'Mois'}</h3>
-                                          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Frais: {p.feePercentage}%</p>
-                                          <p style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: '2px' }}>
-                                              {((invoice.amount * (p.feePercentage / 100)) + 50).toFixed(2)} MRU
-                                          </p>
-                                          <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0 }}>(+ 50 MRU transaction)</p>
-                                      </div>
-                                  ))}
+                          <form onSubmit={(e) => handleAcceptPlan(e, invoice)}>
+                              {/* Affichage de la durée choisie */}
+                              <div className="mb-3">
+                                  {(() => {
+                                      let option = repaymentOptions.find(opt => opt.duration === invoice.requestedDuration && opt.durationType === invoice.requestedDurationType);
+                                      if (!option && repaymentOptions.length > 0) option = repaymentOptions[0];
+                                      
+                                      return option ? (
+                                        <div 
+                                          className="surface active-plan" 
+                                          style={{ 
+                                              padding: '15px', textAlign: 'center', 
+                                              border: '2px solid var(--primary)',
+                                              borderRadius: 'var(--border-radius-sm)'
+                                          }}>
+                                            <h3 style={{ margin: '0 0 5px 0' }}>Plan de {option.duration} {option.durationType === 'DAYS' ? 'Jours' : 'Mois'}</h3>
+                                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Frais: {option.feePercentage}%</p>
+                                            <p style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: '2px' }}>
+                                                {((invoice.amount * (option.feePercentage / 100)) + 50).toFixed(2)} MRU
+                                            </p>
+                                            <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0 }}>(Frais de service + 50 MRU transaction)</p>
+                                        </div>
+                                      ) : (
+                                          <p style={{ color: 'var(--danger)' }}>Plan sélectionné introuvable.</p>
+                                      );
+                                  })()}
                               </div>
 
                               <div className="mb-3">
@@ -500,8 +508,9 @@ const MyInvoices = () => {
                                   <label className="form-label">
                                       Preuve du paiement des frais calculés ci-dessus ({
                                         (() => {
-                                          const selectedOption = repaymentOptions.find(opt => opt.duration === planForm.duration && opt.durationType === planForm.durationType);
-                                          const feePercent = selectedOption ? selectedOption.feePercentage : 0;
+                                          let option = repaymentOptions.find(opt => opt.duration === invoice.requestedDuration && opt.durationType === invoice.requestedDurationType);
+                                          if (!option && repaymentOptions.length > 0) option = repaymentOptions[0];
+                                          const feePercent = option ? option.feePercentage : 0;
                                           return ((invoice.amount * (feePercent / 100)) + 50).toFixed(2);
                                         })()
                                       } MRU)

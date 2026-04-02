@@ -58,6 +58,9 @@ model Invoice {
   dueDate          DateTime
   documentUrl      String
   status           String   @default("PENDING") // PENDING, APPROVED, FEE_VERIFYING, READY_TO_PAY, PAID, REJECTED, FULLY_REPAID, INFO_REQUIRED
+  
+  requestedDuration     Int?
+  requestedDurationType String?
   requestedDocs    String? // Docs demandés à l'utilisateur
   additionalDocUrl String? // Le document supplémentaire uploadé par l'utilisateur
 
