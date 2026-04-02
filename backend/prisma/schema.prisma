@@ -14,15 +14,15 @@ model User {
   id              String         @id @default(uuid())
   firstName       String
   lastName        String
-  phone           String         @unique
+  phone           String?        @unique
   email           String?        @unique
   password        String
   otpCode         String?
   otpExpiresAt    DateTime?
   isPhoneVerified Boolean        @default(false)
-  role            String         @default("USER") // USER ou ADMIN
-  status          String         @default("ACTIVE") // ACTIVE, SUSPENDED, BLOCKED
-  creditScore     Int            @default(100) // Score de fiabilité du client
+  role            String         @default("USER")
+  status          String         @default("ACTIVE")
+  creditScore     Int            @default(100)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 

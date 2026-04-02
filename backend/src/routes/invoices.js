@@ -12,8 +12,16 @@ const prisma = new PrismaClient();
 // Générer un OTP pour la soumission d'une facture
 router.post('/send-submit-otp', auth, async (req, res) => {
   try {
+    const { method } = req.body; // 'email' or 'sms'
     const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
     if (!user) return res.status(404).json({ error: 'Utilisateur introuvable.' });
+
+    if (method === 'email' && !user.email) {
+      return res.status(400).json({ error: 'Aucune adresse email associée à ce compte.' });
+    }
+    if (method === 'sms' && !user.phone) {
+      return res.status(400).json({ error: 'Aucun numéro de téléphone associé à ce compte.' });
+    }
 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = new Date(Date.now() + 10 * 60000);
@@ -23,17 +31,33 @@ router.post('/send-submit-otp', auth, async (req, res) => {
       data: { otpCode, otpExpiresAt }
     });
 
-    await sendSms({
-      phone: user.phone,
-      message: `FinPay: Code de sécurité pour soumettre votre facture : ${otpCode}. Expire dans 10 min.`
-    });
+    if (method === 'email') {
+      await sendEmail({
+        email: user.email,
+        subject: 'FinPay — Code de confirmation de facture',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:500px;margin:auto;padding:30px;border:1px solid #e0e0e0;border-radius:8px;text-align:center">
+            <h2 style="color:#4361ee">FinPay</h2>
+            <p>Code de confirmation pour soumettre votre facture :</p>
+            <div style="font-size:2.5rem;font-weight:bold;letter-spacing:8px;color:#4361ee;margin:20px 0">${otpCode}</div>
+            <p style="color:#888;font-size:0.9rem">Expire dans <strong>10 minutes</strong>.</p>
+          </div>
+        `
+      });
+    } else {
+      await sendSms({
+        phone: user.phone,
+        message: `FinPay: Code de sécurité pour soumettre votre facture : ${otpCode}. Expire dans 10 min.`
+      });
+    }
 
-    res.json({ message: 'Code OTP envoyé par SMS.' });
+    res.json({ message: `Code OTP envoyé par ${method === 'email' ? 'email' : 'SMS'}.` });
   } catch (error) {
     console.error('Erreur envoi OTP facture:', error);
     res.status(500).json({ error: 'Erreur lors de l\'envoi du code.' });
   }
 });
+
 
 // Soumettre une facture
 router.post('/submit', auth, upload.single('invoiceDocument'), async (req, res) => {

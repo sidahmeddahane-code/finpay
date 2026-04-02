@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Download, CreditCard, Clock, CheckCircle, ChevronDown, ChevronUp, Upload, X, FileText, FileSignature } from 'lucide-react';
+import { Download, CreditCard, Clock, CheckCircle, ChevronDown, ChevronUp, Upload, X, FileText, FileSignature, Phone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import EngagementDocument from '../components/EngagementDocument';
 
 const MyInvoices = () => {
@@ -21,6 +22,15 @@ const MyInvoices = () => {
   const [viewingContract, setViewingContract] = useState(null);
 
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [userProfile, setUserProfile] = useState(null);
+
+  const fetchProfile = async () => {
+    const token = localStorage.getItem('token');
+    const res = await fetch('/api/auth/profile', { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    setUserProfile(data);
+  };
 
   const fetchInvoices = async () => {
     try {
@@ -74,6 +84,7 @@ const MyInvoices = () => {
     fetchInvoices();
     fetchPaymentMethods();
     fetchRepaymentOptions();
+    fetchProfile();
   }, []);
 
   const handleAcceptPlan = async (e, invoiceId) => {
@@ -375,8 +386,22 @@ const MyInvoices = () => {
                     </div>
 
                     <div>
+                      {/* GATE: Phone verification required before accessing payment plan */}
+                      {invoice.status === 'APPROVED' && !invoice.repaymentPlan && userProfile && !userProfile.isPhoneVerified && (
+                        <div style={{ background: 'rgba(248,150,30,0.08)', border: '2px solid rgba(248,150,30,0.4)', borderRadius: 'var(--border-radius)', padding: '25px', textAlign: 'center' }}>
+                          <Phone size={40} style={{ color: '#f8961e', marginBottom: '15px' }} />
+                          <h4 style={{ color: '#f8961e', marginBottom: '10px' }}>Vérification de téléphone requise</h4>
+                          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
+                            Votre facture a été approuvée ! Pour accéder aux détails du plan de paiement et procéder au règlement des frais, vous devez d'abord vérifier votre numéro de téléphone.
+                          </p>
+                          <button onClick={() => navigate('/profile')} className="btn btn-primary">
+                            📲 Vérifier mon téléphone
+                          </button>
+                        </div>
+                      )}
+
                       {/* Cas 1: L'admin a approuvé la facture, l'utilisateur doit choisir un plan et payer les 10% */}
-                      {invoice.status === 'APPROVED' && !invoice.repaymentPlan && (
+                      {invoice.status === 'APPROVED' && !invoice.repaymentPlan && userProfile?.isPhoneVerified && (
                         <div style={{ background: 'var(--surface-light)', padding: '20px', borderRadius: 'var(--border-radius)', border: '1px solid var(--primary-light)' }}>
                           <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>{t('repayment.granted', 'Financement pré-approuvé !')}</h4>
                           <p style={{ fontSize: '0.9rem', marginBottom: '15px' }}>{t('repayment.choose_plan', 'Choisissez votre durée et payez les frais initiaux pour débloquer le financement :')}</p>

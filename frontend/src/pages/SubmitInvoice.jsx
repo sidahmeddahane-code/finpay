@@ -14,6 +14,7 @@ const SubmitInvoice = () => {
   });
   const [file, setFile] = useState(null);
   const [otpCode, setOtpCode] = useState('');
+  const [otpMethod, setOtpMethod] = useState('sms'); // 'sms' or 'email'
   
   const [kycStatus, setKycStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -67,15 +68,16 @@ const SubmitInvoice = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('/api/invoices/send-submit-otp', {
+    const res = await fetch('/api/invoices/send-submit-otp', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method: otpMethod })
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur d'envoi OTP");
 
-      setSuccess('Un code SMS vous a été envoyé pour confirmer cette facture.');
+      setSuccess(`Code envoyé par ${otpMethod === 'email' ? 'email' : 'SMS'}.`);
       setStep('otp');
     } catch (err) {
       setError(err.message);
@@ -273,10 +275,24 @@ const SubmitInvoice = () => {
               </div>
             </div>
 
-            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px', textAlign: i18n.language === 'ar' ? 'left' : 'right' }}>
-               <button type="submit" className="btn btn-primary" disabled={submitting}>
-                 {submitting ? 'Préparation...' : t('invoices.submit_btn', 'Soumettre pour validation')}
-               </button>
+            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+               {/* OTP Method Selector */}
+               <div className="form-group">
+                 <label className="form-label">Recevoir le code de confirmation par :</label>
+                 <div style={{ display: 'flex', background: 'var(--surface-hover)', borderRadius: 'var(--border-radius-sm)', padding: '4px', gap: '4px' }}>
+                   <button type="button" onClick={() => setOtpMethod('sms')} style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 'var(--border-radius-sm)', cursor: 'pointer', fontWeight: 600, background: otpMethod === 'sms' ? 'var(--primary)' : 'transparent', color: otpMethod === 'sms' ? 'white' : 'var(--text-muted)', transition: 'all 0.2s' }}>
+                     📱 SMS
+                   </button>
+                   <button type="button" onClick={() => setOtpMethod('email')} style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 'var(--border-radius-sm)', cursor: 'pointer', fontWeight: 600, background: otpMethod === 'email' ? 'var(--primary)' : 'transparent', color: otpMethod === 'email' ? 'white' : 'var(--text-muted)', transition: 'all 0.2s' }}>
+                     📧 Email
+                   </button>
+                 </div>
+               </div>
+               <div style={{ textAlign: i18n.language === 'ar' ? 'left' : 'right', marginTop: '15px' }}>
+                  <button type="submit" className="btn btn-primary" disabled={submitting}>
+                    {submitting ? 'Préparation...' : t('invoices.submit_btn', 'Soumettre pour validation')}
+                  </button>
+               </div>
             </div>
           </form>
         ) : (

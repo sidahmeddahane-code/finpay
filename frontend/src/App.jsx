@@ -18,6 +18,7 @@ import AdminPartners from './pages/AdminPartners';
 import AdminExpenses from './pages/AdminExpenses';
 import AdminUsers from './pages/AdminUsers';
 import AdminLogs from './pages/AdminLogs';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
             <Route path="/submit-invoice" element={<SubmitInvoice />} />
             <Route path="/my-invoices" element={<MyInvoices />} />
             <Route path="/kyc" element={<Kyc />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/about" element={<AboutUs />} />
 
             {/* Routes Admin */}

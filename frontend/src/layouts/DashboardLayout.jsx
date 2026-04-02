@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { Outlet, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
-import { LayoutDashboard, FileText, UploadCloud, Users, LogOut, ShieldCheck, Clock, CheckCircle, Wallet, Settings, CheckSquare, Globe, Banknote, Info, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, FileText, UploadCloud, Users, LogOut, ShieldCheck, Clock, CheckCircle, Wallet, Settings, CheckSquare, Globe, Banknote, Info, ClipboardList, UserCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const DashboardLayout = () => {
@@ -49,6 +49,9 @@ const DashboardLayout = () => {
               </Link>
               <Link to="/my-invoices" className={navItemClass('/my-invoices')} style={{ width: '100%', justifyContent: 'flex-start' }}>
                 <FileText size={18} /> {t('menu.my_requests', 'Mes Demandes')}
+              </Link>
+              <Link to="/profile" className={navItemClass('/profile')} style={{ width: '100%', justifyContent: 'flex-start' }}>
+                <UserCircle size={18} /> Mon Profil
               </Link>
               <Link to="/about" className={navItemClass('/about')} style={{ width: '100%', justifyContent: 'flex-start', marginTop: '15px' }}>
                 <Info size={18} /> {t('menu.about', 'À Propos & Contact')}
@@ -101,7 +104,7 @@ const DashboardLayout = () => {
 
              <div className="surface mb-3" style={{ padding: '15px' }}>
                 <p style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '5px' }}>{user.firstName} {user.lastName}</p>
-                <p style={{ fontSize: '0.8rem' }}>{user.email}</p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{user.email || user.phone}</p>
              </div>
             <button onClick={handleLogout} className="btn btn-outline" style={{ width: '100%', color: 'var(--danger)', borderColor: 'var(--danger)' }}>
               <LogOut size={18} /> {t('menu.logout', 'Déconnexion')}
