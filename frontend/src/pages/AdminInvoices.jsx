@@ -264,7 +264,7 @@ const AdminInvoices = () => {
                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                                   <input 
                                     type="file" 
-                                    accept=".jpg,.jpeg,.png,.pdf" 
+                                    accept="*" 
                                     className="form-input" 
                                     style={{ width: '200px', fontSize: '0.85rem', padding: '6px' }}
                                     onChange={(e) => setUploadFile(e.target.files[0])}

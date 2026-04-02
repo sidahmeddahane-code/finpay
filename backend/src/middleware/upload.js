@@ -17,7 +17,7 @@ const storage = new CloudinaryStorage({
       folder:          'finpay/uploads',
       resource_type:   'auto',
       public_id:       `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
-      allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
+      // Removed allowed_formats to allow Cloudinary to accept the types we filter
     };
   },
 });
@@ -26,11 +26,14 @@ const upload = multer({
   storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
   fileFilter: (req, file, cb) => {
-    const allowed = /jpeg|jpg|png|pdf/;
-    const extOk   = allowed.test(path.extname(file.originalname).toLowerCase());
-    const mimeOk  = allowed.test(file.mimetype) || file.mimetype.startsWith('image/');
-    if (extOk || mimeOk) return cb(null, true);
-    cb(new Error('Seuls les fichiers images (jpeg, jpg, png) et PDF sont acceptés.'));
+    // Permet un spectre très large de documents et d'images
+    const allowedExtensions = /\.(jpeg|jpg|png|webp|gif|pdf|doc|docx|xls|xlsx|csv|txt|zip|rar)$/i;
+    const isImage = file.mimetype.startsWith('image/');
+    
+    if (allowedExtensions.test(file.originalname) || isImage) {
+        return cb(null, true);
+    }
+    cb(new Error('Format non supporté. Veuillez uploader une image, un PDF, Word, Excel, texte, ou archive.'));
   },
 });
 
