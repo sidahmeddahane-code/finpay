@@ -167,6 +167,37 @@ router.get('/invoices', auth, isAdmin, async (req, res) => {
     }
 });
 
+// Demander des informations supplémentaires pour une facture
+router.post('/invoices/:invoiceId/request-info', auth, isAdmin, async (req, res) => {
+    try {
+        const { invoiceId } = req.params;
+        const { requestedDocs } = req.body;
+
+        if (!requestedDocs) {
+            return res.status(400).json({ error: 'Veuillez spécifier les documents requis.' });
+        }
+
+        const invoice = await prisma.invoice.update({
+            where: { id: invoiceId },
+            data: { status: 'INFO_REQUIRED', requestedDocs },
+            include: { user: true }
+        });
+
+        const sendSms = require('../utils/sendSms');
+        await sendSms({
+            phone: invoice.user.phone,
+            message: `FinPay: Action requise pour votre facture (Réf: ${invoice.invoiceNumber}). Des documents additionnels sont demandés. Consultez votre compte.`
+        }).catch(e => console.error(e));
+
+        await logAction(req.user.userId, req.user.name || 'Admin', 'REQUEST_INVOICE_DOCS', 'INVOICE', invoiceId, requestedDocs);
+
+        res.json({ message: 'Demande de documents additionnels envoyée avec succès.', invoice });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erreur lors de la demande de documents.' });
+    }
+});
+
 // Approuver/Refuser facture
 router.post('/invoices/:invoiceId/review', auth, isAdmin, async (req, res) => {
     try {

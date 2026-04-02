@@ -20,6 +20,7 @@ const MyInvoices = () => {
   const [planForm, setPlanForm] = useState({ duration: 2, method: '', file: null, signed: false });
   const [receiptInvoice, setReceiptInvoice] = useState(null);
   const [viewingContract, setViewingContract] = useState(null);
+  const [additionalDocUpload, setAdditionalDocUpload] = useState(null);
 
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -119,9 +120,35 @@ const MyInvoices = () => {
       alert(t('repayment.granted', "Plan soumis avec succès. En attente de validation des frais."));
       setPlanForm({ duration: 2, method: paymentMethods.length > 0 ? paymentMethods[0].name : '', file: null, signed: false });
       await fetchInvoices(); // Refresh data
-    } catch (error) {
-       console.error(error);
-       alert(error.message);
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const submitAdditionalDoc = async (e, invoiceId) => {
+    e.preventDefault();
+    if (!additionalDocUpload) return alert('Veuillez joindre le document demandé.');
+    
+    setActionLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('additionalDocument', additionalDocUpload);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/invoices/${invoiceId}/submit-additional-doc`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      if (!res.ok) throw new Error("Erreur d'envoi du document");
+      alert('Document soumis avec succès !');
+      setAdditionalDocUpload(null);
+      fetchInvoices();
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
     } finally {
       setActionLoading(false);
     }
@@ -163,10 +190,10 @@ const MyInvoices = () => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'PENDING': return <span className="badge badge-pending">En cours d'examen</span>;
-      case 'APPROVED': return <span className="badge badge-success">Approuvée (Plan à choisir)</span>;
-      case 'FEE_VERIFYING': return <span className="badge badge-pending">Vérification des frais</span>;
-      case 'READY_TO_PAY': return <span className="badge badge-pending">Paiement FinPay en cours</span>;
-      case 'REJECTED': return <span className="badge badge-danger">Refusée</span>;
+      case 'APPROVED': return <span className="badge badge-success">{t('status.approved', 'Approuvée')}</span>; // Phase 1: Facture validée par admin
+      case 'FEE_VERIFYING': return <span className="badge badge-warning">Vérification Frais</span>; // Admin vérifie la preuve de paiement des frais
+      case 'READY_TO_PAY': return <span className="badge badge-success">Prêt à Payer</span>; // Frais validés, attente paiement fournisseur
+      case 'INFO_REQUIRED': return <span className="badge badge-warning" style={{ background: '#f59e0b11', color: '#f59e0b' }}>Infos Requises</span>;
       case 'PAID': return <span className="badge badge-primary">Plan en cours</span>; // Admin a payé, plan actif
       case 'PLANNED': return <span className="badge badge-primary">Plan en cours</span>; 
       case 'FULLY_REPAID': return <span className="badge badge-success">Remboursée</span>;
@@ -386,6 +413,31 @@ const MyInvoices = () => {
                     </div>
 
                     <div>
+                      {/* INFO_REQUIRED section */}
+                      {invoice.status === 'INFO_REQUIRED' && (
+                          <div className="mt-4" style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.3)', padding: '20px', borderRadius: 'var(--border-radius)', textAlign: 'left' }}>
+                              <h4 style={{ color: '#f59e0b', marginBottom: '10px' }}>⚠️ Action Requise : Documents Manquants</h4>
+                              <p style={{ fontSize: '0.9rem', marginBottom: '15px', color: 'var(--text-main)' }}>
+                                L'administrateur a besoin d'informations supplémentaires pour traiter votre demande.<br/>
+                                <strong>Documents demandés :</strong> {invoice.requestedDocs}
+                              </p>
+                              <form onSubmit={(e) => submitAdditionalDoc(e, invoice.id)} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                                  <div style={{ flex: 1 }}>
+                                      <input 
+                                          type="file" 
+                                          className="form-input" 
+                                          accept=".jpg,.jpeg,.png,.pdf" 
+                                          onChange={(e) => setAdditionalDocUpload(e.target.files[0])}
+                                      />
+                                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '5px' }}>Requis: {invoice.requestedDocs}</p>
+                                  </div>
+                                  <button type="submit" className="btn btn-primary" disabled={actionLoading} style={{ background: '#f59e0b', borderColor: '#f59e0b' }}>
+                                      {actionLoading ? '...' : 'Envoyer Document'}
+                                  </button>
+                              </form>
+                          </div>
+                      )}
+
                       {/* GATE: Phone verification required before accessing payment plan */}
                       {invoice.status === 'APPROVED' && !invoice.repaymentPlan && userProfile && !userProfile.isPhoneVerified && (
                         <div style={{ background: 'rgba(248,150,30,0.08)', border: '2px solid rgba(248,150,30,0.4)', borderRadius: 'var(--border-radius)', padding: '25px', textAlign: 'center' }}>

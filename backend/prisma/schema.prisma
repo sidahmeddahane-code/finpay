@@ -57,12 +57,14 @@ model Invoice {
   amount          Float
   dueDate         DateTime
   documentUrl     String
-  status          String         @default("PENDING") // PENDING, APPROVED, FEE_VERIFYING, READY_TO_PAY, PAID, REJECTED, FULLY_REPAID
+  status          String         @default("PENDING") // PENDING, APPROVED, FEE_VERIFYING, READY_TO_PAY, PAID, REJECTED, FULLY_REPAID, INFO_REQUIRED
+  requestedDocs   String?        // Docs demandés à l'utilisateur
+  additionalDocUrl String?       // Le document supplémentaire uploadé par l'utilisateur
   
   submittedAt     DateTime       @default(now())
   approvedAt      DateTime?
   paidByAdminAt   DateTime?
-  adminPaymentProofUrl String?   // Preuve du paiement de FinPay au fournisseur
+  adminPaymentProofUrl String?   
 
   repaymentPlan   RepaymentPlan?
 }

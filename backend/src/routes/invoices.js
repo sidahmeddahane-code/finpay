@@ -133,6 +133,39 @@ router.post('/submit', auth, upload.single('invoiceDocument'), async (req, res) 
   }
 });
 
+// Soumettre un document supplémentaire demandé par l'admin (INFO_REQUIRED)
+router.post('/:invoiceId/submit-additional-doc', auth, upload.single('additionalDocument'), async (req, res) => {
+  try {
+    const { invoiceId } = req.params;
+    const userId = req.user.userId;
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Le document supplémentaire est requis.' });
+    }
+
+    const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId } });
+    if (!invoice || invoice.userId !== userId) {
+      return res.status(404).json({ error: 'Facture introuvable.' });
+    }
+
+    if (invoice.status !== 'INFO_REQUIRED') {
+      return res.status(400).json({ error: 'Cette facture ne nécessite pas de documents supplémentaires.' });
+    }
+
+    const additionalDocUrl = req.file.path;
+
+    const updatedInvoice = await prisma.invoice.update({
+      where: { id: invoiceId },
+      data: { status: 'PENDING', additionalDocUrl } // Remet la facture en PENDING
+    });
+
+    res.json({ message: 'Document soumis avec succès.', invoice: updatedInvoice });
+  } catch (error) {
+    console.error('Erreur soumission doc additionnel:', error);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
 // Récupérer les factures de l'utilisateur
 router.get('/my-invoices', auth, async (req, res) => {
   try {

@@ -72,6 +72,31 @@ const AdminInvoices = () => {
     }
   };
 
+  const handleRequestInfo = async (invoiceId) => {
+    const requestedDocs = window.prompt("Quels documents supplémentaires demandez-vous ?\n(Ex: Fiche de paie, Contrat de travail...)");
+    if (!requestedDocs || requestedDocs.trim() === '') return;
+
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/admin/invoices/${invoiceId}/request-info`, {
+          method: 'POST',
+          headers: { 
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json' 
+          },
+          body: JSON.stringify({ requestedDocs })
+      });
+      if(!res.ok) throw new Error('Erreur lors de la demande d\'infos');
+      await fetchInvoices();
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const [uploadFile, setUploadFile] = useState(null);
 
   const handlePayInvoice = async (invoiceId) => {
@@ -161,9 +186,16 @@ const AdminInvoices = () => {
                        
                        <div style={{ textAlign: 'right' }}>
                            <h2 style={{ margin: '0 0 10px 0', color: 'var(--text-main)' }}>{invoice.amount.toFixed(2)} MRU</h2>
-                           <a href={`${invoice.documentUrl}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{ padding: '8px 15px', fontSize: '0.85rem' }}>
-                              <Download size={16} /> {t('invoices.see_doc', 'Justificatif')}
-                           </a>
+                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
+                                <a href={`${invoice.documentUrl}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{ padding: '8px 15px', fontSize: '0.85rem' }}>
+                                   <Download size={16} /> {t('invoices.see_doc', 'Justificatif')}
+                                </a>
+                                {invoice.additionalDocUrl && (
+                                    <a href={`${invoice.additionalDocUrl}`} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '8px 15px', fontSize: '0.85rem', background: 'var(--primary)', color: 'white' }}>
+                                       <Download size={16} /> Doc Supp. Reçu
+                                    </a>
+                                )}
+                            </div>
                        </div>
                    </div>
 
@@ -175,10 +207,20 @@ const AdminInvoices = () => {
                                <button onClick={() => handleReview(invoice.id, 'REJECTED')} disabled={actionLoading} className="btn btn-outline" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}>
                                    <X size={18} /> {t('status.rejected', 'Refuser')}
                                </button>
+                               <button onClick={() => handleRequestInfo(invoice.id)} disabled={actionLoading} className="btn btn-outline" style={{ color: '#f59e0b', borderColor: '#f59e0b' }}>
+                                   Demander Infos
+                               </button>
                                <button onClick={() => handleReview(invoice.id, 'APPROVED')} disabled={actionLoading} className="btn btn-primary" style={{ background: 'var(--success)', border: 'none' }}>
                                    <Check size={18} /> {t('status.approved', 'Approuver')}
                                </button>
                            </>
+                       )}
+
+                       {/* Si en attente de docs additionnels */}
+                       {invoice.status === 'INFO_REQUIRED' && (
+                           <div style={{ padding: '10px', color: '#f59e0b', fontWeight: 500 }}>
+                               En attente du document supplémentaire: "{invoice.requestedDocs}"
+                           </div>
                        )}
 
                        {/* Si approuvé mais plan non encore choisi */}
