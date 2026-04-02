@@ -13,12 +13,10 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const isImage = /jpeg|jpg|png/.test(file.mimetype);
     return {
-      folder:         'finpay/uploads',
-      resource_type:  isImage ? 'image' : 'raw',
-      format:         isImage ? undefined : 'pdf',
-      public_id:      `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+      folder:          'finpay/uploads',
+      resource_type:   'auto',
+      public_id:       `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
       allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
     };
   },
