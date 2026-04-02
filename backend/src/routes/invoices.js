@@ -5,6 +5,7 @@ const { auth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { calculatePenalty } = require('../utils/penalty');
 const sendSms = require('../utils/sendSms');
+const sendEmail = require('../utils/sendEmail');
 
 const prisma = new PrismaClient();
 
@@ -81,6 +82,27 @@ router.post('/submit', auth, upload.single('invoiceDocument'), async (req, res) 
     });
 
     res.status(201).json({ message: 'Facture soumise avec succès.', invoice });
+
+    // Notify admin by email
+    sendEmail({
+      email: process.env.ADMIN_EMAIL,
+      subject: `💸 Nouvelle Facture Soumise — ${provider}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #e0e0e0;border-radius:8px">
+          <h2 style="color:#4361ee">💸 Nouvelle Demande de Financement</h2>
+          <p>Un citoyen vient de soumettre une nouvelle facture nécessitant votre approbation.</p>
+          <table style="width:100%;border-collapse:collapse;margin-top:15px">
+            <tr><td style="padding:8px;background:#f5f5f5;font-weight:bold">Citoyen</td><td style="padding:8px">${user.firstName} ${user.lastName} (${user.phone})</td></tr>
+            <tr><td style="padding:8px;background:#f5f5f5;font-weight:bold">Prestataire</td><td style="padding:8px">${provider}</td></tr>
+            <tr><td style="padding:8px;background:#f5f5f5;font-weight:bold">N° Facture</td><td style="padding:8px">${invoiceNumber}</td></tr>
+            <tr><td style="padding:8px;background:#f5f5f5;font-weight:bold">Montant</td><td style="padding:8px;font-size:1.2em;color:#4361ee"><strong>${parseFloat(amount).toFixed(2)} MRU</strong></td></tr>
+            <tr><td style="padding:8px;background:#f5f5f5;font-weight:bold">Catégorie</td><td style="padding:8px">${category}</td></tr>
+          </table>
+          <p style="margin-top:20px"><a href="https://finpay.today/admin/invoices" style="background:#4361ee;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">→ Voir et Approuver</a></p>
+        </div>
+      `
+    }).catch(e => console.error('Email admin error:', e));
+
   } catch (error) {
     console.error('Erreur soumission facture:', error);
     res.status(500).json({ error: 'Erreur lors de la soumission de la facture.' });

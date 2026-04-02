@@ -3,6 +3,7 @@ const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const { auth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const sendEmail = require('../utils/sendEmail');
 
 const prisma = new PrismaClient();
 
@@ -55,6 +56,25 @@ router.post('/submit', auth, upload.fields([
     });
 
     res.status(201).json({ message: 'Documents KYC soumis avec succès', kyc });
+
+    // Notify admin by email
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    sendEmail({
+      email: process.env.ADMIN_EMAIL,
+      subject: `🇮🇩 Nouvelle Soumission KYC — ${user?.firstName} ${user?.lastName}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #e0e0e0;border-radius:8px">
+          <h2 style="color:#4361ee">🇮🇩 Nouvelle Vérification d'Identité (KYC)</h2>
+          <p>Un citoyen a soumis ses documents KYC et attend votre validation.</p>
+          <table style="width:100%;border-collapse:collapse;margin-top:15px">
+            <tr><td style="padding:8px;background:#f5f5f5;font-weight:bold">Nom Complet</td><td style="padding:8px">${user?.firstName} ${user?.lastName}</td></tr>
+            <tr><td style="padding:8px;background:#f5f5f5;font-weight:bold">Téléphone</td><td style="padding:8px">${user?.phone}</td></tr>
+            <tr><td style="padding:8px;background:#f5f5f5;font-weight:bold">Numéro PIèCE</td><td style="padding:8px">${idNumber}</td></tr>
+          </table>
+          <p style="margin-top:20px"><a href="https://finpay.today/admin/kyc" style="background:#4361ee;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">→ Voir et Valider le KYC</a></p>
+        </div>
+      `
+    }).catch(e => console.error('Email admin KYC error:', e));
 
   } catch (error) {
     console.error('Erreur soumission KYC:', error);
