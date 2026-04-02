@@ -248,8 +248,9 @@ const AdminDashboard = () => {
               'Citoyen': `${inv.user?.firstName} ${inv.user?.lastName}`,
               'T\u00e9l\u00e9phone': inv.user?.phone || '',
               'Prestataire': inv.provider || '',
-              'Montant Financ\u00e9 (MRU)': inv.amount?.toFixed(2) || '',
-              'Dur\u00e9e Plan (mois)': inv.repaymentPlan?.durationMonths || '',
+              'Montant (MRU)': inv.amount?.toFixed(2) || '',
+              'Durée Plan': inv.repaymentPlan ? `${inv.repaymentPlan.duration} ${inv.repaymentPlan.durationType === 'DAYS' ? 'Jours' : 'Mois'}` : '',
+              'Statut': inv.status || '',
               'Date': new Date(inv.submittedAt).toLocaleDateString(),
             }));
             exportToCSV(rows, 'detail_financements_finpay');
@@ -323,7 +324,7 @@ const AdminDashboard = () => {
                           <>
                             <td style={{ padding: '10px' }}>{inv.provider}</td>
                             <td style={{ padding: '10px', textAlign: 'right', fontWeight: 600 }}>{inv.amount?.toFixed(2)}</td>
-                            <td style={{ padding: '10px', textAlign: 'center' }}>{inv.repaymentPlan?.durationMonths || '—'} mois</td>
+                            <td style={{ padding: '10px', textAlign: 'center' }}>{inv.repaymentPlan ? `${inv.repaymentPlan.duration} ${inv.repaymentPlan.durationType === 'DAYS' ? 'Jours' : 'Mois'}` : '—'}</td>
                             <td style={{ padding: '10px', color: 'var(--text-muted)' }}>{new Date(inv.submittedAt).toLocaleDateString()}</td>
                           </>
                         ) : (

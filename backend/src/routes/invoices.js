@@ -209,7 +209,10 @@ router.get('/repayment-options', auth, async (req, res) => {
   try {
     const options = await prisma.repaymentOption.findMany({
       where: { isActive: true },
-      orderBy: { durationMonths: 'asc' }
+      orderBy: [
+        { durationType: 'desc' },
+        { duration: 'asc' }
+      ]
     });
     res.json(options);
   } catch (error) {
@@ -221,7 +224,7 @@ router.get('/repayment-options', auth, async (req, res) => {
 router.post('/:invoiceId/accept-plan', auth, upload.single('feeProof'), async (req, res) => {
     try {
       const { invoiceId } = req.params;
-      const { durationMonths, commitmentSigned } = req.body; // ex: 2, 4, 6
+      const { duration, durationType, commitmentSigned } = req.body; 
       const userId = req.user.userId;
   
       if (!req.file) {
@@ -245,8 +248,9 @@ router.post('/:invoiceId/accept-plan', auth, upload.single('feeProof'), async (r
       }
   
       // Validation de la durée et calcul des frais via RepaymentOption
+      const durationInt = parseInt(duration);
       const option = await prisma.repaymentOption.findUnique({
-        where: { durationMonths: parseInt(durationMonths) }
+        where: { duration_durationType: { duration: durationInt, durationType } }
       });
       if (!option || !option.isActive) {
           return res.status(400).json({ error: "L'option de remboursement sélectionnée n'est pas valide ou est inactive." });
@@ -255,14 +259,15 @@ router.post('/:invoiceId/accept-plan', auth, upload.single('feeProof'), async (r
       // Le montant total du plan correspond au montant de la facture (intérêts 0%), 
       // car la plateforme se rémunère uniquement avec les frais payés initialement.
       const totalAmount = invoice.amount;
-      const installmentAmount = totalAmount / durationMonths;
+      const installmentAmount = totalAmount / durationInt;
       const feeProofUrl = req.file.path; // Cloudinary URL
 
       // Créer le plan avec les nouveaux champs
       const plan = await prisma.repaymentPlan.create({
         data: {
           invoiceId: invoice.id,
-          durationMonths: parseInt(durationMonths),
+          duration: durationInt,
+          durationType,
           totalAmount,
           feePercentage,
           feeProofUrl,
@@ -274,15 +279,30 @@ router.post('/:invoiceId/accept-plan', auth, upload.single('feeProof'), async (r
       // Créer les échéances (installments)
       const installmentsData = [];
       let currentDate = new Date();
-      currentDate.setMonth(currentDate.getMonth() + 1); // 1ère échéance dans 1 mois
-  
-      for (let i = 0; i < durationMonths; i++) {
-        installmentsData.push({
-          planId: plan.id,
-          amount: installmentAmount,
-          dueDate: new Date(currentDate) // Clone de la date
-        });
-        currentDate.setMonth(currentDate.getMonth() + 1); // Mois suivant
+      
+      const installmentStep = Math.max(1, durationInt);
+      // For MONTHS, 1 installment per month. For DAYS, 1 installment every (duration / steps) ?
+      // Wait, if it's 15 days, is it 1 installment of 15 days? Yes, usually short term is single-pay or split.
+      // We'll keep it simple: 1 single installment if durationType === 'DAYS' OR split normally.
+      // Actually let's assume `installmentAmount` applies and we have `durationInt` installments? NO, if it's 15 DAYS it shouldn't be 15 installments of 1 day.
+      // Usually, durationType = DAYS means the whole plan is due after X days.
+      // Let's create ONLY 1 installment at the end of the DAYS. If MONTHS, we create N installments.
+      if (durationType === 'DAYS') {
+          currentDate.setDate(currentDate.getDate() + durationInt);
+          installmentsData.push({
+            planId: plan.id,
+            amount: totalAmount,
+            dueDate: new Date(currentDate)
+          });
+      } else {
+          for (let i = 0; i < durationInt; i++) {
+            currentDate.setMonth(currentDate.getMonth() + 1); // Mois suivant
+            installmentsData.push({
+              planId: plan.id,
+              amount: installmentAmount,
+              dueDate: new Date(currentDate) // Clone de la date
+            });
+          }
       }
   
       await prisma.installment.createMany({

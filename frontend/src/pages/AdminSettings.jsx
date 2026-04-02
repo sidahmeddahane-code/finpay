@@ -196,7 +196,7 @@ const AdminAccountSection = () => {
 // ────────────────────────────────────────────────────────────────────────────
 const SuperAdminRepaymentOptions = () => {
   const [options, setOptions] = useState([]);
-  const [formData, setFormData] = useState({ durationMonths: '', feePercentage: '' });
+  const [formData, setFormData] = useState({ duration: '', durationType: 'MONTHS', feePercentage: '' });
   const [loading, setLoading] = useState(false);
   const token = localStorage.getItem('token');
 
@@ -220,7 +220,7 @@ const SuperAdminRepaymentOptions = () => {
         body: JSON.stringify(formData)
       });
       if (res.ok) {
-        setFormData({ durationMonths: '', feePercentage: '' });
+        setFormData({ duration: '', durationType: 'MONTHS', feePercentage: '' });
         fetchOptions();
       } else {
         const data = await res.json();
@@ -249,9 +249,18 @@ const SuperAdminRepaymentOptions = () => {
         <div>
           <h4 className="mb-3">Ajouter une option</h4>
           <form onSubmit={handleAdd}>
-            <div className="form-group mb-3">
-              <label className="form-label">Durée (Mois)</label>
-              <input type="number" className="form-input" value={formData.durationMonths} onChange={e => setFormData({...formData, durationMonths: e.target.value})} required placeholder="ex: 2" />
+            <div className="grid-cols-2" style={{ gap: '15px' }}>
+                <div className="form-group mb-3">
+                  <label className="form-label">Durée</label>
+                  <input type="number" className="form-input" value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value})} required placeholder="ex: 2" />
+                </div>
+                <div className="form-group mb-3">
+                  <label className="form-label">Type</label>
+                  <select className="form-input" value={formData.durationType} onChange={e => setFormData({...formData, durationType: e.target.value})}>
+                      <option value="MONTHS">Mois</option>
+                      <option value="DAYS">Jours</option>
+                  </select>
+                </div>
             </div>
             <div className="form-group mb-3">
               <label className="form-label">Frais de service (%)</label>
@@ -268,7 +277,7 @@ const SuperAdminRepaymentOptions = () => {
               {options.map(opt => (
                 <div key={opt.id} className="surface flex-between" style={{ padding: '12px 16px' }}>
                   <div>
-                    <strong>{opt.durationMonths} Mois</strong>
+                    <strong>{opt.duration} {opt.durationType === 'DAYS' ? 'Jours' : 'Mois'}</strong>
                     <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Frais: {opt.feePercentage}%</div>
                   </div>
                   <button className="btn btn-outline" style={{ color: 'var(--danger)', borderColor: 'var(--border-color)', padding: '8px' }} onClick={() => handleDelete(opt.id)}>

@@ -68,9 +68,9 @@ const EngagementDocument = ({ user, invoice, onClose }) => {
             <div style={{ marginBottom: '30px' }}>
                 <h3 style={{ textDecoration: 'underline', marginBottom: '15px' }}>2. Modalités de Remboursement</h3>
                 <p>
-                    Le Débiteur s'engage à rembourser le montant exact de la facture, soit <strong>{invoice.amount.toFixed(2)} MRU</strong>, réparti sur une durée de <strong>{plan.durationMonths} mois</strong>.
+                    Le Débiteur s'engage à rembourser le montant exact de la facture, soit <strong>{invoice.amount.toFixed(2)} MRU</strong>, réparti sur une durée de <strong>{plan.duration} {plan.durationType === 'DAYS' ? 'Jours' : 'Mois'}</strong>.
                     <br/><br/>
-                    Le montant de chaque mensualité est fixé à <strong>{(invoice.amount / plan.durationMonths).toFixed(2)} MRU</strong>.
+                    Le montant de chaque échéance est fixé à <strong>{(invoice.amount / (plan.durationType === 'DAYS' ? 1 : plan.duration)).toFixed(2)} MRU</strong>.
                     Ces paiements s'effectuent sans toucher aux frais initiaux de service de <strong>{plan.feePercentage}%</strong> qui ont déjà été réglés séparément par le Débiteur pour activer ce plan.
                 </p>
             </div>

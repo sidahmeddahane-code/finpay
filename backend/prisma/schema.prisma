@@ -73,7 +73,8 @@ model RepaymentPlan {
   id              String         @id @default(uuid())
   invoiceId       String         @unique
   invoice         Invoice        @relation(fields: [invoiceId], references: [id])
-  durationMonths  Int            // 1, 3, 6, etc.
+  duration        Int            // ex: 1, 3, 6, 15...
+  durationType    String         @default("MONTHS") // "MONTHS" or "DAYS"
   totalAmount     Float          // Original amount + fees
   feePercentage   Float
   feePaid         Boolean        @default(false)
@@ -171,8 +172,11 @@ model PartnerBank {
 
 model RepaymentOption {
   id              String   @id @default(uuid())
-  durationMonths  Int      @unique // ex: 2, 4, 6...
+  duration        Int      
+  durationType    String   @default("MONTHS") // "MONTHS" ou "DAYS"
   feePercentage   Float    // ex: 5.0, 10.0, 15.0...
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
+
+  @@unique([duration, durationType])
 }

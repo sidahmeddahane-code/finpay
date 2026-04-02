@@ -689,7 +689,10 @@ router.delete('/users/:id', auth, isSuperAdmin, async (req, res) => {
 router.get('/repayment-options', auth, isSuperAdmin, async (req, res) => {
   try {
     const options = await prisma.repaymentOption.findMany({
-      orderBy: { durationMonths: 'asc' }
+      orderBy: [
+        { durationType: 'desc' },
+        { duration: 'asc' }
+      ]
     });
     res.json(options);
   } catch (err) {
@@ -699,20 +702,22 @@ router.get('/repayment-options', auth, isSuperAdmin, async (req, res) => {
 
 router.post('/repayment-options', auth, isSuperAdmin, async (req, res) => {
   try {
-    const { durationMonths, feePercentage } = req.body;
-    if (!durationMonths || feePercentage === undefined) {
-      return res.status(400).json({ error: 'Durée et pourcentage sont requis.' });
+    const { duration, durationType, feePercentage } = req.body;
+    if (!duration || !durationType || feePercentage === undefined) {
+      return res.status(400).json({ error: 'Durée, type et pourcentage sont requis.' });
     }
     const option = await prisma.repaymentOption.create({
       data: {
-        durationMonths: parseInt(durationMonths),
+        duration: parseInt(duration),
+        durationType,
         feePercentage: parseFloat(feePercentage)
       }
     });
-    await logAction(req.user.userId, req.user.name || 'Super Admin', 'CREATE_REPAYMENT_OPTION', 'OPTION', option.id, `${durationMonths} Mois - ${feePercentage}%`);
+    await logAction(req.user.userId, req.user.name || 'Super Admin', 'CREATE_REPAYMENT_OPTION', 'OPTION', option.id, `${duration} ${durationType} - ${feePercentage}%`);
     res.status(201).json({ message: 'Option créée.', option });
   } catch (err) {
-    if (err.code === 'P2002') return res.status(400).json({ error: 'Une option avec cette durée existe déjà.' });
+    if (err.code === 'P2002') return res.status(400).json({ error: 'Une option avec cette durée exacte existe déjà.' });
+    console.error(err);
     res.status(500).json({ error: 'Erreur création option.' });
   }
 });

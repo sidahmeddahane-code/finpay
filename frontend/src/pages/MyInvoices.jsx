@@ -17,7 +17,7 @@ const MyInvoices = () => {
   const [repaymentOptions, setRepaymentOptions] = useState([]);
 
   // States pour la soumission d'un plan (V4)
-  const [planForm, setPlanForm] = useState({ duration: 2, method: '', file: null, signed: false });
+  const [planForm, setPlanForm] = useState({ duration: 2, durationType: 'MONTHS', method: '', file: null, signed: false });
   const [receiptInvoice, setReceiptInvoice] = useState(null);
   const [viewingContract, setViewingContract] = useState(null);
   const [additionalDocUpload, setAdditionalDocUpload] = useState(null);
@@ -74,7 +74,7 @@ const MyInvoices = () => {
       const data = await res.json();
       setRepaymentOptions(data);
       if(data.length > 0) {
-          setPlanForm(prev => ({ ...prev, duration: data[0].durationMonths }));
+          setPlanForm(prev => ({ ...prev, duration: data[0].duration, durationType: data[0].durationType }));
       }
     } catch (err) {
       console.error('Erreur chargement options:', err);
@@ -100,7 +100,8 @@ const MyInvoices = () => {
     setActionLoading(true);
     try {
       const formData = new FormData();
-      formData.append('durationMonths', planForm.duration);
+      formData.append('duration', planForm.duration);
+      formData.append('durationType', planForm.durationType);
       formData.append('method', planForm.method);
       formData.append('feeProof', planForm.file);
       formData.append('commitmentSigned', planForm.signed);
@@ -258,7 +259,7 @@ const MyInvoices = () => {
                          <tbody>
                              {receiptInvoice.repaymentPlan.installments.map((inst, idx) => (
                                  <tr key={inst.id}>
-                                     <td style={{ padding: '12px', borderBottom: '1px solid var(--border-color)' }}>Mois {idx + 1}</td>
+                                     <td style={{ padding: '12px', borderBottom: '1px solid var(--border-color)' }}>Échéance {idx + 1}</td>
                                      <td style={{ padding: '12px', borderBottom: '1px solid var(--border-color)' }}>{new Date(inst.dueDate).toLocaleDateString()}</td>
                                      <td style={{ padding: '12px', borderBottom: '1px solid var(--border-color)', textAlign: 'right', fontWeight: 'bold' }}>{inst.amount.toFixed(2)}</td>
                                  </tr>
@@ -465,14 +466,14 @@ const MyInvoices = () => {
                                       <p style={{ gridColumn: '1 / -1', color: 'var(--text-muted)' }}>Aucun plan disponible actuellement.</p>
                                   ) : repaymentOptions.map(p => (
                                       <div 
-                                        key={p.durationMonths}
-                                        onClick={() => setPlanForm({...planForm, duration: p.durationMonths})}
-                                        className={`surface ${planForm.duration === p.durationMonths ? 'active-plan' : ''}`} 
+                                        key={p.id}
+                                        onClick={() => setPlanForm({...planForm, duration: p.duration, durationType: p.durationType})}
+                                        className={`surface ${planForm.duration === p.duration && planForm.durationType === p.durationType ? 'active-plan' : ''}`} 
                                         style={{ 
                                             cursor: 'pointer', padding: '15px', textAlign: 'center', 
-                                            border: planForm.duration === p.durationMonths ? '2px solid var(--primary)' : '1px solid var(--border-color)' 
+                                            border: planForm.duration === p.duration && planForm.durationType === p.durationType ? '2px solid var(--primary)' : '1px solid var(--border-color)' 
                                         }}>
-                                          <h3 style={{ margin: '0 0 5px 0' }}>{p.durationMonths} Mois</h3>
+                                          <h3 style={{ margin: '0 0 5px 0' }}>{p.duration} {p.durationType === 'DAYS' ? 'Jours' : 'Mois'}</h3>
                                           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Frais: {p.feePercentage}%</p>
                                           <p style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: '2px' }}>
                                               {((invoice.amount * (p.feePercentage / 100)) + 50).toFixed(2)} MRU
@@ -499,7 +500,7 @@ const MyInvoices = () => {
                                   <label className="form-label">
                                       Preuve du paiement des frais calculés ci-dessus ({
                                         (() => {
-                                          const selectedOption = repaymentOptions.find(opt => opt.durationMonths === planForm.duration);
+                                          const selectedOption = repaymentOptions.find(opt => opt.duration === planForm.duration && opt.durationType === planForm.durationType);
                                           const feePercent = selectedOption ? selectedOption.feePercentage : 0;
                                           return ((invoice.amount * (feePercent / 100)) + 50).toFixed(2);
                                         })()
@@ -565,7 +566,7 @@ const MyInvoices = () => {
                              {invoice.repaymentPlan.installments.map((inst, index) => (
                                <div key={inst.id} style={{ padding: '15px', borderBottom: index < invoice.repaymentPlan.installments.length - 1 ? '1px solid var(--border-color)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                   <div>
-                                    <p style={{ fontWeight: 600 }}>{t('repayment.installment', 'Échéance')} {index + 1}/{invoice.repaymentPlan.durationMonths}</p>
+                                    <p style={{ fontWeight: 600 }}>{t('repayment.installment', 'Échéance')} {index + 1}/{invoice.repaymentPlan.installments.length}</p>
                                     <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('repayment.due_for', 'Pour le')} {new Date(inst.dueDate).toLocaleDateString()}</p>
                                   </div>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>

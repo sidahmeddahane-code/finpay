@@ -170,7 +170,7 @@ const UserHistoryModal = ({ userId, onClose }) => {
                                                 )}
                                             </div>
                                             <p style={{ margin: 0, fontSize: '0.9rem' }}>
-                                                <strong>Durée:</strong> {invoice.repaymentPlan.durationMonths} mois | 
+                                                <strong>Durée:</strong> {invoice.repaymentPlan.duration} {invoice.repaymentPlan.durationType === 'DAYS' ? 'Jours' : 'Mois'} | 
                                                 <strong> Total initial:</strong> {invoice.repaymentPlan.totalAmount} MRU
                                             </p>
                                             
