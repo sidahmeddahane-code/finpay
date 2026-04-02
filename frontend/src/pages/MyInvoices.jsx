@@ -338,7 +338,7 @@ const MyInvoices = () => {
                             {paymentData.file ? paymentData.file.name : "Cliquez pour uploader (JPG/PNG)"}
                         </p>
                         <input 
-                            id="proofUpload" type="file" accept="*" 
+                            id="proofUpload" type="file" accept=".jpg,.jpeg,.png,.pdf" 
                             onClick={e => e.stopPropagation()}
                             onChange={(e) => setPaymentData({...paymentData, file: e.target.files[0]})} 
                             style={{ display: 'none' }} 
@@ -426,7 +426,7 @@ const MyInvoices = () => {
                                       <input 
                                           type="file" 
                                           className="form-input" 
-                                          accept="*" 
+                                          accept=".jpg,.jpeg,.png,.pdf" 
                                           onChange={(e) => setAdditionalDocUpload(e.target.files[0])}
                                       />
                                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '5px' }}>Requis: {invoice.requestedDocs}</p>

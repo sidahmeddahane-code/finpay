@@ -262,12 +262,12 @@ const SubmitInvoice = () => {
                 <Upload size={32} style={{ color: 'var(--primary)', marginBottom: '10px' }} />
                 <h4 style={{ margin: 0 }}>Cliquez pour télécharger</h4>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '5px' }}>
-                  {file ? `✅ ${file.name}` : "Formats acceptés : JPG, PNG, PDF, DOC, XLS, TXT, ZIP (Max 50MB)"}
+                  {file ? `✅ ${file.name}` : "Formats acceptés : PDF ou Photos JPG/PNG (Max 50MB)"}
                 </p>
                 <input 
                   id="fileUpload" 
                   type="file" 
-                  accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" 
+                  accept=".jpg,.jpeg,.png,.pdf" 
                   onClick={e => e.stopPropagation()}
                   onChange={handleFileChange} 
                   style={{ display: 'none' }} 
