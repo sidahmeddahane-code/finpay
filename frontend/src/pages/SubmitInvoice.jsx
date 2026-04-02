@@ -266,6 +266,7 @@ const SubmitInvoice = () => {
                   id="fileUpload" 
                   type="file" 
                   accept=".jpg,.jpeg,.png,.pdf" 
+                  onClick={e => e.stopPropagation()}
                   onChange={handleFileChange} 
                   style={{ display: 'none' }} 
                 />

@@ -301,6 +301,7 @@ const MyInvoices = () => {
                         </p>
                         <input 
                             id="proofUpload" type="file" accept=".jpg,.jpeg,.png,.pdf" 
+                            onClick={e => e.stopPropagation()}
                             onChange={(e) => setPaymentData({...paymentData, file: e.target.files[0]})} 
                             style={{ display: 'none' }} 
                         />
@@ -431,6 +432,7 @@ const MyInvoices = () => {
                                     type="file" 
                                     className="form-input" 
                                     accept=".jpg,.jpeg,.png,.pdf" 
+                                    onClick={e => e.stopPropagation()}
                                     onChange={(e) => setPlanForm({...planForm, file: e.target.files[0]})}
                                   />
                               </div>

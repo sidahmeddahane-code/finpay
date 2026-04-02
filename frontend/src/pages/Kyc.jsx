@@ -285,6 +285,7 @@ const Kyc = () => {
                      id="idUpload" 
                      type="file" 
                      accept=".jpg,.jpeg,.png" 
+                     onClick={e => e.stopPropagation()}
                      onChange={(e) => setIdPhoto(e.target.files[0])} 
                      style={{ display: 'none' }} 
                    />
