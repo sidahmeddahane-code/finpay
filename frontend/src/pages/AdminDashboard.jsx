@@ -49,7 +49,7 @@ const AdminDashboard = () => {
   let totalRevenus = 0;
   invoices.forEach(inv => {
       const plan = inv.repaymentPlan;
-      if (plan && plan.feePaid) {
+      if (plan && (plan.feePaid || ['PAID', 'PLANNED', 'FULLY_REPAID'].includes(inv.status))) {
           // Frais de service = pourcentage du montant initial + 50 MRU frais fixes de transaction
           totalRevenus += ((inv.amount * plan.feePercentage) / 100) + 50;
           
@@ -239,7 +239,7 @@ const AdminDashboard = () => {
         const isFinancement = detailModal === 'financement';
         const modalInvoices = isFinancement
           ? invoices.filter(i => ['PAID', 'PLANNED', 'FULLY_REPAID'].includes(i.status))
-          : invoices.filter(i => i.repaymentPlan?.feePaid);
+          : invoices.filter(i => i.repaymentPlan && (i.repaymentPlan.feePaid || ['PAID', 'PLANNED', 'FULLY_REPAID'].includes(i.status)));
 
         const exportDetail = () => {
           if (isFinancement) {
@@ -256,7 +256,7 @@ const AdminDashboard = () => {
             exportToCSV(rows, 'detail_financements_finpay');
           } else {
             const rows = modalInvoices.map(inv => {
-              const frais = ((inv.amount * (inv.repaymentPlan?.feePercentage || 0)) / 100);
+              const frais = ((inv.amount * (inv.repaymentPlan?.feePercentage || 0)) / 100) + 50;
               const penalites = inv.repaymentPlan?.installments
                 ?.filter(i => i.status === 'PAID')
                 .reduce((s, i) => s + (i.penaltyApplied || 0), 0) || 0;
@@ -314,7 +314,7 @@ const AdminDashboard = () => {
                 </thead>
                 <tbody>
                   {modalInvoices.map(inv => {
-                    const frais = ((inv.amount * (inv.repaymentPlan?.feePercentage || 0)) / 100);
+                    const frais = ((inv.amount * (inv.repaymentPlan?.feePercentage || 0)) / 100) + 50;
                     const penalites = inv.repaymentPlan?.installments?.filter(i => i.status === 'PAID').reduce((s, i) => s + (i.penaltyApplied || 0), 0) || 0;
                     return (
                       <tr key={inv.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
