@@ -51,14 +51,10 @@ const AdminKyc = () => {
       });
       const data = await res.json();
       
-      // Filtrer uniquement ceux qui ont soumis un KYC
-      const kycUsers = data.filter(u => u.kyc);
-      // Trier: PENDING d'abord, puis par date
-      kycUsers.sort((a, b) => {
-          if (a.kyc.status === 'PENDING' && b.kyc.status !== 'PENDING') return -1;
-          if (a.kyc.status !== 'PENDING' && b.kyc.status === 'PENDING') return 1;
-          return new Date(b.kyc.submittedAt) - new Date(a.kyc.submittedAt);
-      });
+      // Filtrer uniquement ceux qui nécessitent une validation (en attente ou info requise)
+      const kycUsers = data.filter(u => u.kyc && ['PENDING', 'INFO_REQUIRED'].includes(u.kyc.status));
+      // Trier par date
+      kycUsers.sort((a, b) => new Date(b.kyc.submittedAt) - new Date(a.kyc.submittedAt));
       
       setUsers(kycUsers);
     } catch (err) {
