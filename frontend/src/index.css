@@ -1,22 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Colors - Modern Deep Blue & Vibrant Accents */
-  --primary: #4361ee;
-  --primary-light: #4895ef;
-  --primary-dark: #3f37c9;
+  /* Colors - Modern Bright Sky Blue & Light Theme */
+  --primary: #0ea5e9;
+  --primary-light: #38bdf8;
+  --primary-dark: #0284c7;
   
-  --secondary: #f72585;     /* Highlight for action/warning */
-  --success: #17c3b2;
-  --warning: #f8961e;
-  --danger: #ef233c;
+  --secondary: #fb7185;     /* Highlight for action/warning */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
   
   --surface-light: #ffffff;
-  --surface-hover: #f8f9fa;
-  --bg-color: #f0f4f8;      /* Smooth soft background */
+  --surface-hover: #f0f9ff;
+  --bg-color: #f8fafc;      /* Very bright smooth background */
   
-  --text-main: #2b2d42;
-  --text-muted: #8d99ae;
+  --text-main: #334155;
+  --text-muted: #64748b;
   
   /* Borders & Shadows */
   --border-radius: 16px;
@@ -34,17 +34,7 @@
   --transition-bounce: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Dark Mode (optional but built-in) = "Wow effect" */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-color: #0b0f19;
-    --surface-light: #151a28;
-    --surface-hover: #1e2638;
-    --text-main: #f8f9fa;
-    --text-muted: #8d99ae;
-    --border-color: rgba(255, 255, 255, 0.08);
-  }
-}
+/* Dark Mode removed to keep the platform bright and clear everywhere */
 
 * {
   margin: 0;

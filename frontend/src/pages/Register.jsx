@@ -118,14 +118,14 @@ const Register = () => {
                 <label className="form-label">Prénom</label>
                 <div style={{ position: 'relative' }}>
                   <User size={18} style={{ position: 'absolute', top: '15px', left: '15px', color: 'var(--text-muted)' }} />
-                  <input type="text" name="firstName" className="form-input" style={{ paddingLeft: '45px' }} value={formData.firstName} onChange={handleChange} placeholder="Jean" required />
+                  <input type="text" name="firstName" className="form-input" style={{ paddingLeft: '45px' }} value={formData.firstName} onChange={handleChange} placeholder="Prénom" required />
                 </div>
               </div>
               <div className="form-group">
                 <label className="form-label">Nom</label>
                 <div style={{ position: 'relative' }}>
                   <User size={18} style={{ position: 'absolute', top: '15px', left: '15px', color: 'var(--text-muted)' }} />
-                  <input type="text" name="lastName" className="form-input" style={{ paddingLeft: '45px' }} value={formData.lastName} onChange={handleChange} placeholder="Dupont" required />
+                  <input type="text" name="lastName" className="form-input" style={{ paddingLeft: '45px' }} value={formData.lastName} onChange={handleChange} placeholder="Nom" required />
                 </div>
               </div>
             </div>
