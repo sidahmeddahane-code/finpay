@@ -11,6 +11,8 @@ const Profile = () => {
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({ address: '', employment: '' });
   const { user: authUser } = useContext(AuthContext);
 
   const fetchProfile = async () => {
@@ -19,6 +21,7 @@ const Profile = () => {
     const data = await res.json();
     setProfile(data);
     if (data.phone) setPhone(data.phone);
+    setProfileForm({ address: data.address || '', employment: data.employment || '' });
     setLoading(false);
   };
 
@@ -63,6 +66,26 @@ const Profile = () => {
 
   if (loading) return <div className="flex-center" style={{ minHeight: '60vh' }}>Chargement...</div>;
 
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(profileForm)
+      });
+      if (!res.ok) throw new Error("Erreur de sauvegarde");
+      await fetchProfile();
+      setIsEditingProfile(false);
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const kycBadge = {
     APPROVED: { label: 'Vérifié ✓', color: 'var(--success)' },
     PENDING: { label: 'En attente', color: 'var(--warning)' },
@@ -81,36 +104,69 @@ const Profile = () => {
 
         {/* User Info Card */}
         <div className="surface">
-          <h3 className="mb-4" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><User size={18} color="var(--primary)" /> Informations</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Nom complet</span>
-              <strong>{profile?.firstName} {profile?.lastName}</strong>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-              <span style={{ color: 'var(--text-muted)' }}><Mail size={14} style={{ verticalAlign: 'middle' }} /> Email</span>
-              <strong>{profile?.email || '—'}</strong>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-              <span style={{ color: 'var(--text-muted)' }}><Phone size={14} style={{ verticalAlign: 'middle' }} /> Téléphone</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <strong>{profile?.phone || 'Non ajouté'}</strong>
-                {profile?.phone && (
-                  <span style={{ fontSize: '0.75rem', color: profile?.isPhoneVerified ? 'var(--success)' : 'var(--warning)', fontWeight: 600 }}>
-                    {profile?.isPhoneVerified ? '✓ Vérifié' : '⚠ Non vérifié'}
-                  </span>
-                )}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-              <span style={{ color: 'var(--text-muted)' }}><Shield size={14} style={{ verticalAlign: 'middle' }} /> Statut KYC</span>
-              <span style={{ color: kycBadge.color, fontWeight: 600 }}>{kycBadge.label}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-muted)' }}><Star size={14} style={{ verticalAlign: 'middle' }} /> Score de crédit</span>
-              <strong style={{ color: 'var(--success)' }}>{profile?.creditScore} pts</strong>
-            </div>
+          <div className="flex-between mb-4">
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}><User size={18} color="var(--primary)" /> Informations</h3>
+              {!isEditingProfile && (
+                  <button onClick={() => setIsEditingProfile(true)} className="btn btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+                      Éditer
+                  </button>
+              )}
           </div>
+
+          {isEditingProfile ? (
+            <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Adresse Domicile</label>
+                    <input type="text" className="form-input" value={profileForm.address} onChange={e => setProfileForm({...profileForm, address: e.target.value})} placeholder="Ex: Tevragh Zeina, Nouakchott" required />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Emploi / Profession</label>
+                    <input type="text" className="form-input" value={profileForm.employment} onChange={e => setProfileForm({...profileForm, employment: e.target.value})} placeholder="Ex: Ingénieur à Mauritel" required />
+                </div>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                    <button type="submit" className="btn btn-primary" disabled={submitting} style={{ flex: 1, padding: '8px' }}>Enregistrer</button>
+                    <button type="button" onClick={() => setIsEditingProfile(false)} className="btn btn-outline" style={{ flex: 1, padding: '8px' }}>Annuler</button>
+                </div>
+            </form>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Nom complet</span>
+                <strong>{profile?.firstName} {profile?.lastName}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+                <span style={{ color: 'var(--text-muted)' }}><Mail size={14} style={{ verticalAlign: 'middle' }} /> Email</span>
+                <strong>{profile?.email || '—'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+                <span style={{ color: 'var(--text-muted)' }}><Phone size={14} style={{ verticalAlign: 'middle' }} /> Téléphone</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <strong>{profile?.phone || 'Non ajouté'}</strong>
+                  {profile?.phone && (
+                    <span style={{ fontSize: '0.75rem', color: profile?.isPhoneVerified ? 'var(--success)' : 'var(--warning)', fontWeight: 600 }}>
+                      {profile?.isPhoneVerified ? '✓ Vérifié' : '⚠ Non vérifié'}
+                    </span>
+                  )}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>🏠 Adresse</span>
+                <strong>{profile?.address || 'Non spécifiée'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>💼 Emploi</span>
+                <strong>{profile?.employment || 'Non spécifié'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+                <span style={{ color: 'var(--text-muted)' }}><Shield size={14} style={{ verticalAlign: 'middle' }} /> Statut KYC</span>
+                <span style={{ color: kycBadge.color, fontWeight: 600 }}>{kycBadge.label}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}><Star size={14} style={{ verticalAlign: 'middle' }} /> Score de crédit</span>
+                <strong style={{ color: 'var(--success)' }}>{profile?.creditScore} pts</strong>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Phone Verification Card */}

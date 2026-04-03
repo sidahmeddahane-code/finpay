@@ -104,6 +104,8 @@ const UserHistoryModal = ({ userId, onClose }) => {
                         <div className="surface" style={{ padding: '20px' }}>
                             <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><User size={20}/> Informations</h3>
                             <p><strong>Inscrit le:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
+                            <p><strong>Adresse:</strong> {user.address || 'Non spécifiée'}</p>
+                            <p><strong>Emploi:</strong> {user.employment || 'Non spécifié'}</p>
                             <p><strong>Rôle:</strong> {user.role}</p>
                             <p><strong>Factures soumises:</strong> {user.invoices.length}</p>
                         </div>

@@ -250,6 +250,7 @@ router.get('/profile', auth, async (req, res) => {
       select: {
         id: true, firstName: true, lastName: true,
         phone: true, email: true, isPhoneVerified: true,
+        address: true, employment: true,
         creditScore: true, status: true, createdAt: true,
         kyc: { select: { status: true } },
         _count: { select: { invoices: true } }
@@ -258,6 +259,34 @@ router.get('/profile', auth, async (req, res) => {
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: 'Erreur récupération du profil.' });
+  }
+});
+
+// =====================
+// UPDATE USER PROFILE
+// =====================
+router.put('/profile', auth, async (req, res) => {
+  try {
+    const { address, employment } = req.body;
+    
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: {
+        address,
+        employment
+      },
+      select: {
+        id: true, firstName: true, lastName: true,
+        phone: true, email: true, isPhoneVerified: true,
+        address: true, employment: true,
+        creditScore: true, status: true
+      }
+    });
+    
+    res.json({ message: 'Profil mis à jour avec succès.', user: updatedUser });
+  } catch (error) {
+    console.error('Erreur mise à jour profil:', error);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour du profil.' });
   }
 });
 

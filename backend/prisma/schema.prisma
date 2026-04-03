@@ -20,6 +20,8 @@ model User {
   otpCode         String?
   otpExpiresAt    DateTime?
   isPhoneVerified Boolean   @default(false)
+  address         String?
+  employment      String?
   role            String    @default("USER")
   status          String    @default("ACTIVE")
   creditScore     Int       @default(100)
