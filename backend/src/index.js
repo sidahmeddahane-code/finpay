@@ -95,4 +95,9 @@ app.use((err, req, res, next) => {
   res.status(status).json({ error: err.message || 'Une erreur interne est survenue.' });
 });
 
+const startCronJobs = require('./tasks/cronJobs');
+
+// Démarrer les tâches planifiées pour les notifications d'échéances
+startCronJobs();
+
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
