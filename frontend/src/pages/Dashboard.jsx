@@ -39,9 +39,9 @@ const Dashboard = () => {
   if (loading) return <div className="flex-center" style={{ minHeight: '60vh' }}>{t('status.pending', 'Chargement...')}</div>;
 
   const totalUnpaid = invoices.reduce((acc, inv) => {
-      if (inv.status === 'PLANNED' && inv.repaymentPlan) {
+      if (['APPROVED', 'FEE_VERIFYING', 'READY_TO_PAY', 'PAID'].includes(inv.status) && inv.repaymentPlan) {
           const unpaidInstallments = inv.repaymentPlan.installments.filter(i => i.status !== 'PAID');
-          return acc + unpaidInstallments.reduce((sum, i) => sum + i.amount, 0);
+          return acc + unpaidInstallments.reduce((sum, i) => sum + i.amount + (i.dynamicPenalty || 0), 0);
       }
       return acc;
   }, 0);
