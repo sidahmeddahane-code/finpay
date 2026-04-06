@@ -12,11 +12,20 @@ const sendSms = async (options) => {
 
     try {
         const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-        const message = await client.messages.create({
+        
+        const isMessagingService = process.env.TWILIO_PHONE_NUMBER.startsWith('MG');
+        const messagePayload = {
             body: options.message,
-            from: process.env.TWILIO_PHONE_NUMBER, // Votre numéro Twilio
             to: options.phone
-        });
+        };
+
+        if (isMessagingService) {
+            messagePayload.messagingServiceSid = process.env.TWILIO_PHONE_NUMBER;
+        } else {
+            messagePayload.from = process.env.TWILIO_PHONE_NUMBER;
+        }
+
+        const message = await client.messages.create(messagePayload);
         console.log(`SMS envoyé : ${message.sid}`);
     } catch (error) {
         console.error('Erreur lors de l\'envoi du SMS via Twilio:', error);
