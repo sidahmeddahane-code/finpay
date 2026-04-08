@@ -46,6 +46,24 @@ const Dashboard = () => {
       return acc;
   }, 0);
 
+  let nextInstallment = null;
+  invoices.forEach(inv => {
+    if (['APPROVED', 'FEE_VERIFYING', 'READY_TO_PAY', 'PAID'].includes(inv.status) && inv.repaymentPlan) {
+      inv.repaymentPlan.installments.forEach(i => {
+        if (i.status !== 'PAID') {
+          const dueDate = new Date(i.dueDate);
+          if (!nextInstallment || dueDate < nextInstallment.dueDateObj) {
+            nextInstallment = {
+              ...i,
+              dueDateObj: dueDate,
+              totalAmount: i.amount + (i.dynamicPenalty || 0)
+            };
+          }
+        }
+      });
+    }
+  });
+
   const pendingInvoicesCount = invoices.filter(i => i.status === 'PENDING').length;
 
   return (
@@ -91,11 +109,19 @@ const Dashboard = () => {
       )}
 
       {/* Statistiques Rapides */}
-      <div className="grid-cols-3 mb-4">
+      <div className="grid-cols-4 mb-4">
         <div className="surface" style={{ borderTop: '4px solid var(--primary)' }}>
           <p className="form-label" style={{ color: 'var(--text-muted)' }}>{t('dashboard.remaining_debt', 'Reste à payer')}</p>
           <h2 style={{ fontSize: '2rem', margin: '10px 0' }}>{totalUnpaid.toFixed(2)} MRU</h2>
           <p style={{ fontSize: '0.8rem' }} className="badge badge-primary">{t('repayment.installment', 'Échéances futures')}</p>
+        </div>
+
+        <div className="surface" style={{ borderTop: '4px solid var(--danger)' }}>
+          <p className="form-label" style={{ color: 'var(--text-muted)' }}>{t('dashboard.next_due', 'Prochaine échéance')}</p>
+          <h2 style={{ fontSize: '2rem', margin: '10px 0' }}>{nextInstallment ? nextInstallment.totalAmount.toFixed(2) : '0.00'} MRU</h2>
+          <p style={{ fontSize: '0.8rem' }} className="badge badge-danger">
+            {nextInstallment ? new Date(nextInstallment.dueDate).toLocaleDateString() : t('dashboard.no_due', 'Aucune')}
+          </p>
         </div>
 
         <div className="surface" style={{ borderTop: '4px solid var(--warning)' }}>
