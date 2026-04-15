@@ -12,12 +12,13 @@ const sendSms = async (options) => {
 
     try {
         const url = 'https://api.dexatel.com/v1/messages';
+        // Dexatel requires the "data" wrapper and "to" must be an array
         const payload = {
             data: {
-                channel: "SMS",
-                to: options.phone,
                 from: process.env.DEXATEL_SENDER_ID || "FinPay",
-                text: options.message
+                to: [options.phone.toString()],
+                text: options.message,
+                channel: "SMS"
             }
         };
 
