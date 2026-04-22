@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Users, FileText, CheckCircle, Clock, DollarSign, AlertTriangle, Download } from 'lucide-react';
 import UserHistoryModal from '../components/UserHistoryModal';
 import { exportToCSV } from '../utils/exportCsv';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -96,6 +97,20 @@ const AdminDashboard = () => {
   // Trier les retardataires par gravité du retard (le plus long retard en premier)
   lateInstallments.sort((a, b) => b.diffDays - a.diffDays);
 
+  // === DATA POUR LE GRAPHIQUE ===
+  const chartDataMap = {};
+  invoices.forEach(inv => {
+    if (['PAID', 'PLANNED', 'FULLY_REPAID'].includes(inv.status)) {
+      const date = new Date(inv.submittedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+      if (!chartDataMap[date]) {
+        chartDataMap[date] = { date, 'Financements (MRU)': 0 };
+      }
+      chartDataMap[date]['Financements (MRU)'] += inv.amount;
+    }
+  });
+  // Convertir en tableau et prendre les 14 derniers éléments
+  const chartData = Object.values(chartDataMap).slice(-14);
+
   const handleExportSummary = () => {
     const rows = [
       { 'Indicateur': 'Total Financements', 'Valeur (MRU)': totalFinanced.toFixed(2) },
@@ -185,6 +200,32 @@ const AdminDashboard = () => {
             <p style={{ fontSize: '0.8rem' }} className="badge badge-danger">Demandes en attente</p>
          </div>
       </div>
+
+      {/* Analytics Chart */}
+      {chartData.length > 0 && (
+        <div className="surface mb-4">
+          <h3 className="mb-4" style={{ color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+             Financements Récents (14 derniers jours actifs)
+          </h3>
+          <div style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorFin" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => \`\${val} \`} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                <Area type="monotone" dataKey="Financements (MRU)" stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorFin)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       <div className="grid-cols-1">
           <div>

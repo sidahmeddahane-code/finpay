@@ -3,6 +3,8 @@ import { Download, CreditCard, Clock, CheckCircle, ChevronDown, ChevronUp, Uploa
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import EngagementDocument from '../components/EngagementDocument';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const MyInvoices = () => {
   const [invoices, setInvoices] = useState([]);
@@ -31,6 +33,18 @@ const MyInvoices = () => {
     const res = await fetch('/api/auth/profile', { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
     setUserProfile(data);
+  };
+
+  const downloadPDF = () => {
+    const el = document.getElementById('receipt-content');
+    html2canvas(el, { scale: 2 }).then((canvas) => {
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`FinPay_Recu_${receiptInvoice.invoiceNumber}.pdf`);
+    });
   };
 
   const fetchInvoices = async () => {
@@ -286,8 +300,8 @@ const MyInvoices = () => {
                  </div>
 
                  <div className="flex-center mt-4 print-hide">
-                     <button onClick={() => window.print()} className="btn btn-primary" style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '12px 24px', width: '100%', justifyContent: 'center' }}>
-                         <Download size={20} /> Imprimer / Sauvegarder PDF
+                     <button onClick={downloadPDF} className="btn btn-primary" style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '12px 24px', width: '100%', justifyContent: 'center' }}>
+                         <Download size={20} /> Télécharger le Reçu PDF
                      </button>
                  </div>
              </div>

@@ -1,7 +1,7 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { Outlet, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
-import { LayoutDashboard, FileText, UploadCloud, Users, LogOut, ShieldCheck, Clock, CheckCircle, Wallet, Settings, CheckSquare, Globe, Banknote, Info, ClipboardList, UserCircle } from 'lucide-react';
+import { LayoutDashboard, FileText, UploadCloud, Users, LogOut, ShieldCheck, Clock, CheckCircle, Wallet, Settings, CheckSquare, Globe, Banknote, Info, ClipboardList, UserCircle, Moon, Sun } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import NotificationBell from '../components/NotificationBell';
 
@@ -11,9 +11,23 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
+  const [isDarkMode, setIsDarkMode] = useState(
+    document.documentElement.getAttribute('data-theme') === 'dark'
+  );
+
   const toggleLanguage = () => {
     const newLang = i18n.language === 'fr' ? 'ar' : 'fr';
     i18n.changeLanguage(newLang);
+  };
+
+  const toggleTheme = () => {
+    if (isDarkMode) {
+      document.documentElement.removeAttribute('data-theme');
+      setIsDarkMode(false);
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      setIsDarkMode(true);
+    }
   };
 
   if (loading) return <div className="flex-center" style={{ height: '100vh' }}>Chargement...</div>;
@@ -99,8 +113,13 @@ const DashboardLayout = () => {
 
           <div style={{ marginTop: 'auto' }}>
              
-             <button onClick={toggleLanguage} className="btn surface mb-3" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '10px', background: 'var(--surface-light)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '10px' }}>
+             <button onClick={toggleLanguage} className="btn surface mb-2" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '10px', background: 'var(--surface-light)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '10px' }}>
                  <Globe size={18} /> {i18n.language === 'fr' ? 'العربية' : 'Français'}
+             </button>
+
+             <button onClick={toggleTheme} className="btn surface mb-3" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '10px', background: 'var(--surface-light)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '10px' }}>
+                 {isDarkMode ? <Sun size={18} color="#f59e0b" /> : <Moon size={18} color="var(--primary)" />} 
+                 {isDarkMode ? 'Mode Clair' : 'Mode Sombre'}
              </button>
 
 
