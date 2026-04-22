@@ -96,6 +96,14 @@ router.post('/kyc/:userId/review', auth, isAdmin, async (req, res) => {
 
     await logAction(req.user.userId, req.user.name || 'Admin', status === 'APPROVED' ? 'APPROVE_KYC' : 'REJECT_KYC', 'KYC', userId, `Statut: ${status}`);
 
+    await prisma.notification.create({
+      data: {
+        userId,
+        title: status === 'APPROVED' ? 'KYC Approuvé' : 'KYC Rejeté',
+        message: status === 'APPROVED' ? 'Votre vérification d\'identité a été approuvée.' : 'Votre vérification d\'identité a été rejetée. Veuillez vérifier les informations et réessayer.'
+      }
+    });
+
     res.json({ message: `Le KYC a été ${status === 'APPROVED' ? 'approuvé' : 'rejeté'}.`, kyc });
   } catch (error) {
     res.status(500).json({ error: 'Erreur lors de la révision du KYC.' });
@@ -191,6 +199,14 @@ router.post('/invoices/:invoiceId/request-info', auth, isAdmin, async (req, res)
 
         await logAction(req.user.userId, req.user.name || 'Admin', 'REQUEST_INVOICE_DOCS', 'INVOICE', invoiceId, requestedDocs);
 
+        await prisma.notification.create({
+            data: {
+                userId: invoice.user.id,
+                title: 'Action requise : Facture',
+                message: `Des documents additionnels sont demandés pour votre facture (Réf: ${invoice.invoiceNumber}).`
+            }
+        });
+
         res.json({ message: 'Demande de documents additionnels envoyée avec succès.', invoice });
     } catch (error) {
         console.error(error);
@@ -216,6 +232,14 @@ router.post('/invoices/:invoiceId/review', auth, isAdmin, async (req, res) => {
         });
 
         await logAction(req.user.userId, req.user.name || 'Admin', status === 'APPROVED' ? 'APPROVE_INVOICE' : 'REJECT_INVOICE', 'INVOICE', invoiceId, `Réf: ${invoice.invoiceNumber}`);
+
+        await prisma.notification.create({
+            data: {
+                userId: invoice.user.id,
+                title: status === 'APPROVED' ? 'Facture Approuvée' : 'Facture Refusée',
+                message: `Votre facture (Réf: ${invoice.invoiceNumber}) a été ${status === 'APPROVED' ? 'approuvée' : 'refusée'}.`
+            }
+        });
 
         res.json({ message: `Facture ${status === 'APPROVED' ? 'approuvée' : 'refusée'}`, invoice });
     } catch (error) {
@@ -251,6 +275,14 @@ router.post('/invoices/:invoiceId/pay', auth, isAdmin, upload.single('paymentPro
 
         await logAction(req.user.userId, req.user.name || 'Admin', 'PAY_INVOICE_TO_PROVIDER', 'INVOICE', invoiceId, 'Preuve uploadée');
 
+        await prisma.notification.create({
+            data: {
+                userId: invoice.user.id,
+                title: 'Facture Payée',
+                message: 'Votre facture a été payée au fournisseur. Votre plan d\'échelonnement est maintenant Actif !'
+            }
+        });
+
         res.json({ message: `Facture payée. La preuve a été enregistrée. Le plan du citoyen est officiellement actif.`, invoice });
     } catch (error) {
         res.status(500).json({ error: 'Erreur lors du paiement admin de la facture.' });
@@ -277,6 +309,14 @@ router.post('/repayment-plans/:planId/review-fee', auth, isAdmin, async (req, re
             await prisma.invoice.update({ where: {id: plan.invoiceId}, data: {status: 'READY_TO_PAY'} });
             await sendSms({ phone: plan.invoice.user.phone, message: `FinPay: Les frais d'engagement ont été VALIDÉS. La facture passera en paiement.` });
             await logAction(req.user.userId, req.user.name || 'Admin', 'APPROVE_FEE', 'PLAN', planId, `Facture: ${plan.invoiceId}`);
+            
+            await prisma.notification.create({
+                data: {
+                    userId: plan.invoice.userId,
+                    title: 'Frais Validés',
+                    message: 'Les frais d\'engagement ont été validés. La facture passera en paiement.'
+                }
+            });
             res.json({message: 'Frais validés. Facture prête pour paiement au fournisseur.'});
         } else {
             await prisma.installment.deleteMany({where: {planId: planId}});
@@ -284,6 +324,14 @@ router.post('/repayment-plans/:planId/review-fee', auth, isAdmin, async (req, re
             await prisma.invoice.update({ where: {id: plan.invoiceId}, data: {status: 'APPROVED'} });
             await sendSms({ phone: plan.invoice.user.phone, message: `FinPay: Preuve de frais REFUSÉE. Veuillez resoumettre l'engagement.` });
             await logAction(req.user.userId, req.user.name || 'Admin', 'REJECT_FEE', 'PLAN', planId, `Facture: ${plan.invoiceId}`);
+            
+            await prisma.notification.create({
+                data: {
+                    userId: plan.invoice.userId,
+                    title: 'Preuve de frais refusée',
+                    message: 'Preuve de frais refusée. Veuillez resoumettre l\'engagement.'
+                }
+            });
             res.json({message: 'Preuve refusée, le plan a été annulé. Le client devra recommencer.'});
         }
     } catch(err) {
@@ -336,6 +384,14 @@ router.post('/payments/:paymentId/review', auth, isAdmin, async (req, res) => {
             await prisma.installment.update({ where: { id: payment.installmentId }, data: { status: 'PENDING' } });
             await sendSms({ phone: payment.installment.plan.invoice.user.phone, message: `FinPay: La preuve de paiement pour votre échéance a été REFUSÉE.` });
             await logAction(req.user.userId, req.user.name || 'Admin', 'REJECT_PAYMENT', 'PAYMENT', paymentId);
+            
+            await prisma.notification.create({
+                data: {
+                    userId: payment.installment.plan.invoice.userId,
+                    title: 'Paiement Refusé',
+                    message: 'La preuve de paiement pour votre échéance a été refusée.'
+                }
+            });
             return res.json({ message: 'Preuve de paiement refusée. Le client devra recommencer.' });
         }
 
@@ -344,6 +400,14 @@ router.post('/payments/:paymentId/review', auth, isAdmin, async (req, res) => {
             await prisma.installment.update({ where: { id: payment.installmentId }, data: { status: 'PAID' } });
             await sendSms({ phone: payment.installment.plan.invoice.user.phone, message: `FinPay: Merci ! Le paiement de votre échéance a été VALIDÉ.` });
             await logAction(req.user.userId, req.user.name || 'Admin', 'APPROVE_PAYMENT', 'PAYMENT', paymentId);
+            
+            await prisma.notification.create({
+                data: {
+                    userId: payment.installment.plan.invoice.userId,
+                    title: 'Paiement Validé',
+                    message: 'Le paiement de votre échéance a été validé !'
+                }
+            });
 
             if (payment.installment?.plan?.invoice) {
                 await prisma.user.update({ where: { id: payment.installment.plan.invoice.userId }, data: { creditScore: { increment: 5 } } });

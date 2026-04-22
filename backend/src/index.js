@@ -12,6 +12,7 @@ const kycRoutes     = require('./routes/kyc');
 const invoiceRoutes = require('./routes/invoices');
 const adminRoutes   = require('./routes/admin');
 const b2bRoutes     = require('./routes/b2b');
+const notificationRoutes = require('./routes/notifications');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -72,6 +73,7 @@ app.use('/api/kyc',      kycRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/admin',    adminRoutes);
 app.use('/api/b2b',      b2bRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'OK' }));
 

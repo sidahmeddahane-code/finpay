@@ -3,6 +3,7 @@ import { Outlet, Navigate, Link, useLocation, useNavigate } from 'react-router-d
 import { AuthContext } from '../contexts/AuthContext';
 import { LayoutDashboard, FileText, UploadCloud, Users, LogOut, ShieldCheck, Clock, CheckCircle, Wallet, Settings, CheckSquare, Globe, Banknote, Info, ClipboardList, UserCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import NotificationBell from '../components/NotificationBell';
 
 const DashboardLayout = () => {
   const { user, logout, loading } = useContext(AuthContext);
@@ -101,6 +102,8 @@ const DashboardLayout = () => {
              <button onClick={toggleLanguage} className="btn surface mb-3" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '10px', background: 'var(--surface-light)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '10px' }}>
                  <Globe size={18} /> {i18n.language === 'fr' ? 'العربية' : 'Français'}
              </button>
+
+             <NotificationBell />
 
              <div className="surface mb-3" style={{ padding: '15px' }}>
                 <p style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '5px' }}>{user.firstName} {user.lastName}</p>
