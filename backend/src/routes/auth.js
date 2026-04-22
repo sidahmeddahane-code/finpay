@@ -165,7 +165,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       { userId: user.id, role: user.role },
       JWT_SECRET,
-      { expiresIn: '15m' }
+      { expiresIn: '30d' } // Extended to 30 days so users aren't constantly asked for OTP
     );
 
     res.json({
