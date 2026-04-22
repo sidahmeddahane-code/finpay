@@ -22,9 +22,9 @@ const startCronJobs = () => {
       // Fonction d'aide pour formater la date
       const formatDate = (date) => date.toLocaleDateString('fr-FR');
 
-      // Obtenir tous les versements (Installments) PENDING
+      // Obtenir tous les versements (Installments) PENDING ou LATE
       const pendingInstallments = await prisma.installment.findMany({
-        where: { status: 'PENDING' },
+        where: { status: { in: ['PENDING', 'LATE'] } },
         include: {
           plan: {
             include: {
@@ -48,6 +48,13 @@ const startCronJobs = () => {
         let message = null;
         let diffDays = Math.round((dueDate - today) / (1000 * 60 * 60 * 24));
 
+        // Handle late status transition and deduct credit score ONCE
+        if (diffDays < 0 && inst.status === 'PENDING') {
+           await prisma.installment.update({ where: { id: inst.id }, data: { status: 'LATE' } });
+           await prisma.user.update({ where: { id: user.id }, data: { creditScore: { decrement: 10 } } });
+           inst.status = 'LATE'; 
+        }
+
         if (diffDays === 3) {
           message = `Rappel FinPay: Votre échéance de ${amountStr} MRU pour ${providerName} arrive à terme dans 3 jours (${formatDate(dueDate)}). Veuillez préparer votre paiement.`;
         } else if (diffDays === 1) {
@@ -55,7 +62,10 @@ const startCronJobs = () => {
         } else if (diffDays === 0) {
           message = `Alerte FinPay: Votre paiement de ${amountStr} MRU pour ${providerName} est ATTENDU AUJOURD'HUI. Payez dès maintenant sur votre espace FinPay.`;
         } else if (diffDays === -1) {
-          message = `⚠️ FinPay: RAPPEL DE RETARD ! Votre échéance de ${amountStr} MRU d'hier est impayée. Payez urgemment pour limiter l'accumulation des pénalités !`;
+          message = `⚠️ FinPay: RAPPEL DE RETARD ! Votre échéance de ${amountStr} MRU d'hier est impayée. Votre score a baissé de 10 points. Payez urgemment pour limiter l'accumulation des pénalités !`;
+        } else if (diffDays % 7 === 0 && diffDays < -1) {
+          // Relance tous les 7 jours de retard
+          message = `⚠️ FinPay: RAPPEL URGENT ! Votre échéance de ${amountStr} MRU est en retard de ${Math.abs(diffDays)} jours. Des pénalités de retard continuent de s'appliquer.`;
         }
 
         if (message) {
