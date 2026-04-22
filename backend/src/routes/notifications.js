@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
-const authenticateToken = require('../middleware/authMiddleware');
+const { auth } = require('../middleware/auth');
 
 const prisma = new PrismaClient();
 
 // Récupérer les notifications de l'utilisateur connecté
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
     const notifications = await prisma.notification.findMany({
-      where: { userId: req.user.id },
+      where: { userId: req.user.userId },
       orderBy: { createdAt: 'desc' },
       take: 50 // Limit to last 50
     });
@@ -21,11 +21,11 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Récupérer le nombre de notifications non lues
-router.get('/unread-count', authenticateToken, async (req, res) => {
+router.get('/unread-count', auth, async (req, res) => {
   try {
     const count = await prisma.notification.count({
       where: { 
-        userId: req.user.id,
+        userId: req.user.userId,
         isRead: false
       }
     });
@@ -37,12 +37,12 @@ router.get('/unread-count', authenticateToken, async (req, res) => {
 });
 
 // Marquer une notification comme lue
-router.put('/:id/read', authenticateToken, async (req, res) => {
+router.put('/:id/read', auth, async (req, res) => {
   try {
     const { id } = req.params;
     const notification = await prisma.notification.findUnique({ where: { id } });
     
-    if (!notification || notification.userId !== req.user.id) {
+    if (!notification || notification.userId !== req.user.userId) {
       return res.status(404).json({ error: 'Notification introuvable' });
     }
 
@@ -57,10 +57,10 @@ router.put('/:id/read', authenticateToken, async (req, res) => {
 });
 
 // Marquer toutes les notifications comme lues
-router.put('/mark-all-read', authenticateToken, async (req, res) => {
+router.put('/mark-all-read', auth, async (req, res) => {
   try {
     await prisma.notification.updateMany({
-      where: { userId: req.user.id, isRead: false },
+      where: { userId: req.user.userId, isRead: false },
       data: { isRead: true }
     });
     res.json({ message: 'Toutes les notifications marquées comme lues' });
