@@ -302,4 +302,58 @@ router.get('/settings/contact', async (req, res) => {
   }
 });
 
+// =====================
+// FORGOT PASSWORD (Send OTP)
+// =====================
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { phone, email } = req.body;
+    if (!phone && !email) return res.status(400).json({ error: 'Un numéro de téléphone ou email est requis.' });
+
+    let user = null;
+    if (phone) user = await prisma.user.findUnique({ where: { phone } });
+    else if (email) user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+
+    if (!user) return res.status(404).json({ error: 'Aucun compte trouvé avec ces informations.' });
+
+    const method = phone ? 'sms' : 'email';
+    await sendOtp(user, method);
+
+    res.json({ message: 'Code de réinitialisation envoyé.' });
+  } catch (error) {
+    console.error('Erreur forgot-password:', error);
+    res.status(500).json({ error: 'Erreur lors de la demande.' });
+  }
+});
+
+// =====================
+// RESET PASSWORD (Verify & Update)
+// =====================
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { phone, email, otpCode, newPassword } = req.body;
+    let user = null;
+
+    if (phone) user = await prisma.user.findUnique({ where: { phone } });
+    else if (email) user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+
+    if (!user) return res.status(404).json({ error: 'Utilisateur introuvable.' });
+
+    if (user.otpCode !== otpCode || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+      return res.status(400).json({ error: 'Code incorrect ou expiré.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword, otpCode: null, otpExpiresAt: null }
+    });
+
+    res.json({ message: 'Mot de passe réinitialisé avec succès.' });
+  } catch (error) {
+    console.error('Erreur reset-password:', error);
+    res.status(500).json({ error: 'Erreur lors de la réinitialisation.' });
+  }
+});
+
 module.exports = router;

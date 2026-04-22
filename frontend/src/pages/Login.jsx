@@ -25,8 +25,13 @@ const Login = () => {
     setLoading(true);
     try {
       const body = { password };
-      if (authMethod === 'phone') body.phone = identifier;
-      else body.email = identifier.toLowerCase();
+      if (authMethod === 'phone') {
+        const cleanPhone = identifier.replace(/\s+/g, '');
+        if (cleanPhone.length !== 8) return setError('Le numéro doit comporter 8 chiffres.');
+        body.phone = `+222${cleanPhone}`;
+      } else {
+        body.email = identifier.toLowerCase();
+      }
 
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -84,13 +89,17 @@ const Login = () => {
                 ? <Phone size={18} style={{ position: 'absolute', top: '15px', left: '15px', color: 'var(--text-muted)' }} />
                 : <Mail size={18} style={{ position: 'absolute', top: '15px', left: '15px', color: 'var(--text-muted)' }} />
               }
+              {authMethod === 'phone' && (
+                <span style={{ position: 'absolute', top: '15px', left: '40px', fontWeight: 'bold', color: 'var(--text-main)' }}>+222</span>
+              )}
               <input
                 type={authMethod === 'phone' ? 'tel' : 'email'}
                 className="form-input"
-                style={{ paddingLeft: '45px' }}
+                style={{ paddingLeft: authMethod === 'phone' ? '85px' : '45px' }}
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder={authMethod === 'phone' ? '+222 33 44 55 66' : 'vous@email.com'}
+                placeholder={authMethod === 'phone' ? '33 44 55 66' : 'vous@email.com'}
+                maxLength={authMethod === 'phone' ? 8 : undefined}
                 required
               />
             </div>
@@ -101,6 +110,9 @@ const Login = () => {
             <div style={{ position: 'relative' }}>
               <Lock size={18} style={{ position: 'absolute', top: '15px', left: '15px', color: 'var(--text-muted)' }} />
               <input type="password" className="form-input" style={{ paddingLeft: '45px' }} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
+            </div>
+            <div style={{ textAlign: 'right', marginTop: '8px' }}>
+               <Link to="/forgot-password" style={{ fontSize: '0.85rem', color: 'var(--primary)', textDecoration: 'none' }}>Mot de passe oublié ?</Link>
             </div>
           </div>
 

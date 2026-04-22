@@ -38,8 +38,13 @@ const Register = () => {
         lastName: formData.lastName,
         password: formData.password
       };
-      if (authMethod === 'phone') body.phone = formData.phone;
-      else body.email = formData.email.toLowerCase();
+      if (authMethod === 'phone') {
+        const cleanPhone = formData.phone.replace(/\s+/g, '');
+        if (cleanPhone.length !== 8) return setError('Le numéro doit comporter 8 chiffres.');
+        body.phone = `+222${cleanPhone}`;
+      } else {
+        body.email = formData.email.toLowerCase();
+      }
 
       const res = await fetch('/api/auth/register', {
         method: 'POST',
@@ -63,8 +68,12 @@ const Register = () => {
     setLoading(true);
     try {
       const body = { otpCode };
-      if (authMethod === 'phone') body.phone = formData.phone;
-      else body.email = formData.email.toLowerCase();
+      if (authMethod === 'phone') {
+        const cleanPhone = formData.phone.replace(/\s+/g, '');
+        body.phone = `+222${cleanPhone}`;
+      } else {
+        body.email = formData.email.toLowerCase();
+      }
 
       const res = await fetch('/api/auth/verify-registration-otp', {
         method: 'POST',
@@ -135,7 +144,8 @@ const Register = () => {
                 <label className="form-label">Numéro de Téléphone</label>
                 <div style={{ position: 'relative' }}>
                   <Phone size={18} style={{ position: 'absolute', top: '15px', left: '15px', color: 'var(--text-muted)' }} />
-                  <input type="tel" name="phone" className="form-input" style={{ paddingLeft: '45px' }} value={formData.phone} onChange={handleChange} placeholder="+222 33 44 55 66" required />
+                  <span style={{ position: 'absolute', top: '15px', left: '40px', fontWeight: 'bold', color: 'var(--text-main)' }}>+222</span>
+                  <input type="tel" name="phone" className="form-input" style={{ paddingLeft: '85px' }} value={formData.phone} onChange={handleChange} placeholder="33 44 55 66" maxLength={8} required />
                 </div>
               </div>
             ) : (

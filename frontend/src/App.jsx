@@ -2,8 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import DashboardLayout from './layouts/DashboardLayout';
 import Login from './pages/Login';
-
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import SubmitInvoice from './pages/SubmitInvoice';
 import MyInvoices from './pages/MyInvoices';
@@ -28,6 +28,7 @@ function App() {
           {/* Routes publiques */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Routes privées avec Layout commun */}
           <Route element={<DashboardLayout />}>
