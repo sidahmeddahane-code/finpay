@@ -103,7 +103,6 @@ const DashboardLayout = () => {
                  <Globe size={18} /> {i18n.language === 'fr' ? 'العربية' : 'Français'}
              </button>
 
-             <NotificationBell />
 
              <div className="surface mb-3" style={{ padding: '15px' }}>
                 <p style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '5px' }}>{user.firstName} {user.lastName}</p>
@@ -117,6 +116,9 @@ const DashboardLayout = () => {
       </aside>
       
       <main className="main-content">
+        <header style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', marginBottom: '25px', position: 'relative', zIndex: 50 }}>
+          <NotificationBell />
+        </header>
         <Outlet />
       </main>
     </div>

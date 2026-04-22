@@ -58,13 +58,13 @@ const NotificationBell = () => {
   };
 
   return (
-    <div style={{ position: 'relative', marginBottom: '15px' }}>
+    <div style={{ position: 'relative' }}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="btn surface mb-3" 
-        style={{ width: '100%', position: 'relative', display: 'flex', justifyContent: 'center', gap: '10px', background: 'var(--surface-light)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '10px' }}
+        className="btn surface" 
+        style={{ width: '45px', height: '45px', borderRadius: '50%', padding: '0', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'var(--surface-light)', color: 'var(--text-main)', border: '1px solid var(--border-color)', position: 'relative' }}
       >
-        <Bell size={18} /> Notifications
+        <Bell size={20} />
         {unreadCount > 0 && (
           <span 
             className="animate-pulse-ring"
@@ -75,8 +75,8 @@ const NotificationBell = () => {
             padding: '2px 6px', 
             fontSize: '0.7rem',
             position: 'absolute',
-            top: '5px',
-            right: '15px',
+            top: '-5px',
+            right: '-5px',
             fontWeight: 'bold'
           }}>
             {unreadCount}
@@ -87,9 +87,9 @@ const NotificationBell = () => {
       {isOpen && (
         <div style={{ 
           position: 'absolute', 
-          bottom: '100%', 
-          left: 0, 
-          width: '100%', 
+          top: '120%', 
+          right: 0, 
+          width: '320px', 
           minWidth: '280px',
           background: 'var(--surface)', 
           boxShadow: '0 -4px 12px rgba(0,0,0,0.15)', 
