@@ -296,7 +296,7 @@ const SuperAdminRepaymentOptions = () => {
 const AdminSettings = () => {
   const [methods, setMethods] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({ name: '', provider: '', accountNumber: '' });
+  const [formData, setFormData] = useState({ name: '', provider: '', accountNumber: '', logo: null });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [contactData, setContactData] = useState({ address: '', phone: '', email: '', whatsapp: '', aboutText: '' });
   const [isSavingContact, setIsSavingContact] = useState(false);
@@ -341,7 +341,11 @@ const AdminSettings = () => {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (e.target.name === 'logo') {
+        setFormData({ ...formData, logo: e.target.files[0] });
+    } else {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    }
   }
 
   const handleContactChange = (e) => {
@@ -374,15 +378,22 @@ const AdminSettings = () => {
       setIsSubmitting(true);
       try {
         const token = localStorage.getItem('token');
+        const fd = new FormData();
+        fd.append('name', formData.name);
+        fd.append('provider', formData.provider);
+        fd.append('accountNumber', formData.accountNumber);
+        if (formData.logo) {
+            fd.append('logo', formData.logo);
+        }
+
         await fetch('/api/admin/payment-methods', {
             method: 'POST',
             headers: { 
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(formData)
+            body: fd
         });
-        setFormData({ name: '', provider: '', accountNumber: '' });
+        setFormData({ name: '', provider: '', accountNumber: '', logo: null });
         await fetchMethods();
       } catch (error) {
           alert("Erreur lors de l'ajout.");
@@ -432,6 +443,10 @@ const AdminSettings = () => {
                     <label className="form-label">{t('settings.account_number', 'Numéro de Compte / Téléphone')}</label>
                     <input type="text" name="accountNumber" className="form-input" value={formData.accountNumber} onChange={handleChange} placeholder="+222 4X XX XX XX" required />
                 </div>
+                <div className="form-group mb-3">
+                    <label className="form-label">Logo de la Banque / Application (Optionnel)</label>
+                    <input type="file" name="logo" accept="image/*" className="form-input" onChange={handleChange} />
+                </div>
                 <button type="submit" disabled={isSubmitting} className="btn btn-primary" style={{ width: '100%' }}>
                     <Plus size={18} /> {isSubmitting ? '...' : t('settings.add_btn', 'Ajouter le compte')}
                 </button>
@@ -448,9 +463,13 @@ const AdminSettings = () => {
                       {methods.map(method => (
                           <div key={method.id} className="surface flex-between" style={{ padding: '20px' }}>
                               <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(67, 97, 238, 0.1)', color: 'var(--primary)' }} className="flex-center">
-                                      {method.name.toLowerCase().includes('bank') || method.name.toLowerCase().includes('virement') ? <Building size={20} /> : <Smartphone size={20} />}
-                                  </div>
+                                      {method.logoUrl ? (
+                                          <img src={method.logoUrl} alt={method.name} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                                      ) : (
+                                          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(67, 97, 238, 0.1)', color: 'var(--primary)' }} className="flex-center">
+                                              {method.name.toLowerCase().includes('bank') || method.name.toLowerCase().includes('virement') ? <Building size={20} /> : <Smartphone size={20} />}
+                                          </div>
+                                      )}
                                   <div>
                                       <h4 style={{ margin: 0 }}>{method.provider}</h4>
                                       <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>{method.name}</p>

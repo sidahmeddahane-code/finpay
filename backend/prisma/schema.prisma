@@ -120,6 +120,7 @@ model PaymentMethod {
   name          String // e.g "Virement Bancaire", "Wave", "Bankily"
   provider      String // Nom de la banque ou du portefeuille
   accountNumber String // Numéro de compte ou téléphone
+  logoUrl       String? // Image du logo de la banque / mobile money
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
 }

@@ -320,16 +320,24 @@ const MyInvoices = () => {
                      
                      <div className="form-group mb-3">
                          <label className="form-label">{t('repayment.account', "Comptes d'encaissement FinPay")}</label>
-                         <select 
-                            className="form-input" 
-                            style={{ background: 'rgba(67, 97, 238, 0.05)', borderColor: 'var(--primary-light)' }}
-                            value={paymentData.method}
-                            onChange={(e) => setPaymentData({...paymentData, method: e.target.value})}
-                         >
-                             {paymentMethods.map(m => (
-                                 <option key={m.id} value={m.name}>{m.provider} - {m.name} ({m.accountNumber})</option>
-                             ))}
-                         </select>
+                         <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                             <select 
+                                className="form-input" 
+                                style={{ background: 'rgba(67, 97, 238, 0.05)', borderColor: 'var(--primary-light)', flex: 1 }}
+                                value={paymentData.method}
+                                onChange={(e) => setPaymentData({...paymentData, method: e.target.value})}
+                             >
+                                 {paymentMethods.map(m => (
+                                     <option key={m.id} value={m.name}>{m.provider} - {m.name} ({m.accountNumber})</option>
+                                 ))}
+                             </select>
+                             {(() => {
+                                 const selectedM = paymentMethods.find(m => m.name === paymentData.method);
+                                 return selectedM?.logoUrl ? (
+                                     <img src={selectedM.logoUrl} alt="Logo" style={{ width: '45px', height: '45px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)' }} />
+                                 ) : null;
+                             })()}
+                         </div>
                      </div>
 
                      <div className="form-group mb-4">
@@ -493,15 +501,24 @@ const MyInvoices = () => {
 
                               <div className="mb-3">
                                   <label className="form-label">Compte d'envoi des frais</label>
-                                  <select 
-                                        className="form-input" 
-                                        value={planForm.method}
-                                        onChange={(e) => setPlanForm({...planForm, method: e.target.value})}
-                                  >
-                                        {paymentMethods.map(m => (
-                                            <option key={m.id} value={m.name}>{m.provider} - {m.name} ({m.accountNumber})</option>
-                                        ))}
-                                  </select>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                      <select 
+                                            className="form-input" 
+                                            style={{ flex: 1 }}
+                                            value={planForm.method}
+                                            onChange={(e) => setPlanForm({...planForm, method: e.target.value})}
+                                      >
+                                            {paymentMethods.map(m => (
+                                                <option key={m.id} value={m.name}>{m.provider} - {m.name} ({m.accountNumber})</option>
+                                            ))}
+                                      </select>
+                                      {(() => {
+                                          const selectedM = paymentMethods.find(m => m.name === planForm.method);
+                                          return selectedM?.logoUrl ? (
+                                              <img src={selectedM.logoUrl} alt="Logo" style={{ width: '45px', height: '45px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)' }} />
+                                          ) : null;
+                                      })()}
+                                  </div>
                               </div>
 
                               <div className="mb-3">

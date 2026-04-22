@@ -440,14 +440,17 @@ router.get('/payment-methods', auth, isAdmin, async (req, res) => {
     }
 });
 
-router.post('/payment-methods', auth, isAdmin, async (req, res) => {
+router.post('/payment-methods', auth, isAdmin, upload.single('logo'), async (req, res) => {
     try {
         const { name, provider, accountNumber } = req.body;
+        const logoUrl = req.file ? req.file.path : null;
+
         const newMethod = await prisma.paymentMethod.create({
-            data: { name, provider, accountNumber }
+            data: { name, provider, accountNumber, logoUrl }
         });
         res.json(newMethod);
     } catch (error) {
+         console.error('Erreur Upload Logo:', error);
          res.status(500).json({ error: 'Erreur création méthode de paiement.' });
     }
 });
