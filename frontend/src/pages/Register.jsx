@@ -144,8 +144,8 @@ const Register = () => {
                 <label className="form-label">Numéro de Téléphone</label>
                 <div style={{ position: 'relative' }}>
                   <Phone size={18} style={{ position: 'absolute', top: '15px', left: '15px', color: 'var(--text-muted)' }} />
-                  <span style={{ position: 'absolute', top: '15px', left: '40px', fontWeight: 'bold', color: 'var(--text-main)' }}>+222</span>
-                  <input type="tel" name="phone" className="form-input" style={{ paddingLeft: '85px' }} value={formData.phone} onChange={handleChange} placeholder="33 44 55 66" maxLength={8} required />
+                  <span style={{ position: 'absolute', top: '15px', left: '40px', fontWeight: 'bold', color: 'var(--text-main)' }}>🇲🇷 +222</span>
+                  <input type="tel" name="phone" className="form-input" style={{ paddingLeft: '110px' }} value={formData.phone} onChange={handleChange} placeholder="33 44 55 66" maxLength={8} required />
                 </div>
               </div>
             ) : (

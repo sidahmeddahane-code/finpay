@@ -123,12 +123,12 @@ const ForgotPassword = () => {
                   : <Mail size={18} style={{ position: 'absolute', top: '15px', left: '15px', color: 'var(--text-muted)' }} />
                 }
                 {authMethod === 'phone' && (
-                  <span style={{ position: 'absolute', top: '15px', left: '40px', fontWeight: 'bold', color: 'var(--text-main)' }}>+222</span>
+                  <span style={{ position: 'absolute', top: '15px', left: '40px', fontWeight: 'bold', color: 'var(--text-main)' }}>🇲🇷 +222</span>
                 )}
                 <input
                   type={authMethod === 'phone' ? 'tel' : 'email'}
                   className="form-input"
-                  style={{ paddingLeft: authMethod === 'phone' ? '85px' : '45px' }}
+                  style={{ paddingLeft: authMethod === 'phone' ? '110px' : '45px' }}
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder={authMethod === 'phone' ? '33 44 55 66' : 'vous@email.com'}
