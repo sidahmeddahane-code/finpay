@@ -9,7 +9,7 @@ COPY . .
 
 # Build frontend
 WORKDIR /app/frontend
-RUN npm install
+RUN npm install --legacy-peer-deps
 RUN npm run build
 
 # Install backend dependencies and generate Prisma client
