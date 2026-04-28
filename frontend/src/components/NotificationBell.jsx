@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import API_URL from '../config/api';
 
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const fetchNotifications = async () => {
     const token = localStorage.getItem('token');
@@ -55,6 +57,28 @@ const NotificationBell = () => {
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const handleNotificationClick = (n) => {
+    if (!n.isRead) {
+      markAsRead(n.id);
+    }
+    setIsOpen(false);
+
+    const isAdmin = window.location.pathname.startsWith('/admin');
+    let targetPath = isAdmin ? '/admin/dashboard' : '/dashboard';
+    const titleLower = n.title.toLowerCase();
+
+    if (isAdmin) {
+      if (titleLower.includes('kyc') || titleLower.includes('documents')) targetPath = '/admin/kyc';
+      else if (titleLower.includes('facture') || titleLower.includes('frais')) targetPath = '/admin/invoices';
+      else if (titleLower.includes('preuve de paiement') || titleLower.includes('paiement')) targetPath = '/admin/payments';
+    } else {
+      if (titleLower.includes('kyc') || (titleLower.includes('documents') && !titleLower.includes('facture'))) targetPath = '/profile';
+      else if (titleLower.includes('facture') || titleLower.includes('frais') || titleLower.includes('paiement')) targetPath = '/my-invoices';
+    }
+
+    navigate(targetPath);
   };
 
   return (
@@ -113,17 +137,26 @@ const NotificationBell = () => {
               <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', padding: '10px' }}>Aucune notification</p>
             ) : (
               notifications.map(n => (
-                <div key={n.id} style={{ 
+                <div key={n.id} 
+                  onClick={() => handleNotificationClick(n)}
+                  style={{ 
                   padding: '10px', 
                   borderBottom: '1px solid var(--border-color)', 
                   background: n.isRead ? 'transparent' : 'rgba(20, 184, 166, 0.1)',
                   borderRadius: '4px',
-                  marginBottom: '5px'
+                  marginBottom: '5px',
+                  cursor: 'pointer'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-main)' }}>{n.title}</h4>
                     {!n.isRead && (
-                      <button onClick={() => markAsRead(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)' }} title="Marquer comme lu">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markAsRead(n.id);
+                        }} 
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)' }} title="Marquer comme lu"
+                      >
                         <Check size={14} />
                       </button>
                     )}
