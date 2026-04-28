@@ -71,7 +71,7 @@ const SubmitInvoice = () => {
     }
   };
 
-  // Etape 1 : Demander un OTP
+  // Etape 1 : Demander un OTP ou Soumettre Directement
   const handleRequestOtp = async (e) => {
     e.preventDefault();
     setError('');
@@ -89,7 +89,20 @@ const SubmitInvoice = () => {
 
     try {
       const token = localStorage.getItem('token');
-    const res = await fetch('/api/invoices/send-submit-otp', {
+      
+      // Vérifier si l'utilisateur est déjà vérifié
+      const profileRes = await fetch('/api/auth/profile', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const profileData = await profileRes.json();
+
+      if (profileData.isPhoneVerified) {
+        // Soumission directe sans OTP
+        return handleFinalSubmit(null, true);
+      }
+
+      // Sinon, demander l'OTP
+      const res = await fetch('/api/invoices/send-submit-otp', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ method: otpMethod })
@@ -100,16 +113,16 @@ const SubmitInvoice = () => {
 
       setSuccess(`Code envoyé par ${otpMethod === 'email' ? 'email' : 'SMS'}.`);
       setStep('otp');
+      setSubmitting(false); // only reset submitting here if we stop for OTP
     } catch (err) {
       setError(err.message);
-    } finally {
       setSubmitting(false);
     }
   };
 
   // Etape 2 : Confirmer via OTP et Envoyer Facture
-  const handleFinalSubmit = async (e) => {
-    e.preventDefault();
+  const handleFinalSubmit = async (e, bypassOtp = false) => {
+    if (e && e.preventDefault) e.preventDefault();
     setError('');
     setSuccess('');
     setSubmitting(true);
@@ -118,7 +131,9 @@ const SubmitInvoice = () => {
       const data = new FormData();
       Object.keys(formData).forEach(key => data.append(key, formData[key]));
       data.append('invoiceDocument', file);
-      data.append('otpCode', otpCode); // Ajout de l'OTP
+      if (!bypassOtp) {
+        data.append('otpCode', otpCode); // Ajout de l'OTP
+      }
       data.append('requestedDuration', selectedPlan.duration);
       data.append('requestedDurationType', selectedPlan.durationType);
 

@@ -65,10 +65,6 @@ router.post('/submit', auth, upload.single('invoiceDocument'), async (req, res) 
     const userId = req.user.userId;
     const { category, provider, invoiceNumber, amount, dueDate, otpCode, requestedDuration, requestedDurationType } = req.body;
 
-    if (!otpCode) {
-      return res.status(400).json({ error: 'Le code de vérification SMS est requis.' });
-    }
-
     if (!req.file) {
       return res.status(400).json({ error: 'Le document de la facture (photo/pdf) est requis.' });
     }
@@ -79,17 +75,19 @@ router.post('/submit', auth, upload.single('invoiceDocument'), async (req, res) 
       return res.status(403).json({ error: 'Vous devez avoir un KYC approuvé pour soumettre une facture.' });
     }
 
-    // Vérifier l'OTP
+    // Vérifier l'OTP seulement si le compte n'a pas été vérifié lors de l'inscription
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (user.otpCode !== otpCode || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
-      return res.status(400).json({ error: 'Code de sécurité invalide ou expiré.' });
+    if (!user.isPhoneVerified) {
+      if (!otpCode || user.otpCode !== otpCode || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+        return res.status(400).json({ error: 'Code de sécurité invalide ou expiré.' });
+      }
+      
+      // Effacer l'OTP après succès
+      await prisma.user.update({
+        where: { id: userId },
+        data: { otpCode: null, otpExpiresAt: null }
+      });
     }
-
-    // Effacer l'OTP après succès
-    await prisma.user.update({
-      where: { id: userId },
-      data: { otpCode: null, otpExpiresAt: null }
-    });
 
     const documentUrl = req.file.path; // Cloudinary URL
 
