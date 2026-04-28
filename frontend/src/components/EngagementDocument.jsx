@@ -85,6 +85,16 @@ const EngagementDocument = ({ user, invoice, onClose }) => {
                 </p>
             </div>
 
+            {/* Poursuites Judiciaires */}
+            <div style={{ marginBottom: '30px' }}>
+                <h3 style={{ textDecoration: 'underline', marginBottom: '15px' }}>4. Poursuites Judiciaires</h3>
+                <p>
+                    En outre, il est expressément stipulé que tout retard de paiement excédant une durée de <strong>trois (3) mois</strong> consécutifs entraînera systématiquement et de plein droit l'engagement de <strong>poursuites judiciaires</strong> à l'encontre du Débiteur.
+                    <br/><br/>
+                    Ces poursuites auront pour but le recouvrement forcé de l'intégralité des sommes dues, incluant le montant principal de la facture ainsi que le cumul total des pénalités de retard susmentionnées.
+                </p>
+            </div>
+
             {/* Signature */}
             <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'space-between' }}>
                 <div style={{ width: '45%' }}>
