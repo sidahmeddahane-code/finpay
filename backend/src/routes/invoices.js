@@ -9,6 +9,20 @@ const sendEmail = require('../utils/sendEmail');
 
 const prisma = new PrismaClient();
 
+// Helper to notify admins in-app
+const notifyAdmins = async (title, message) => {
+  try {
+    const admins = await prisma.user.findMany({ where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] } } });
+    if (admins.length > 0) {
+      await prisma.notification.createMany({
+        data: admins.map(a => ({ userId: a.id, title, message }))
+      });
+    }
+  } catch (e) {
+    console.error('Error notifying admins:', e);
+  }
+};
+
 // Générer un OTP pour la soumission d'une facture
 router.post('/send-submit-otp', auth, async (req, res) => {
   try {
@@ -104,6 +118,9 @@ router.post('/submit', auth, upload.single('invoiceDocument'), async (req, res) 
         requestedDurationType: requestedDurationType || null
       }
     });
+
+    // Notify admins via In-App Dashboard
+    notifyAdmins('Nouvelle Facture', `Nouvelle demande de financement soumise par ${user.firstName} ${user.lastName} pour un montant de ${parseFloat(amount).toFixed(2)} MRU.`);
 
     res.status(201).json({ message: 'Facture soumise avec succès.', invoice });
 
@@ -315,6 +332,9 @@ router.post('/:invoiceId/accept-plan', auth, upload.single('feeProof'), async (r
           data: { status: 'FEE_VERIFYING' }
       });
   
+      // Notify admins via In-App Dashboard
+      notifyAdmins('Paiement des Frais', `Un citoyen a payé les frais pour la facture (Réf: ${invoice.invoiceNumber}). Veuillez vérifier la preuve.`);
+
       res.json({ message: 'Plan soumis avec succès. En attente de validation des frais par l\'administration.', plan });
     } catch (error) {
       console.error('Erreur création plan:', error);
@@ -383,6 +403,9 @@ router.post('/pay-installment/:installmentId', auth, upload.single('paymentProof
                 penaltyApplied: penalty 
             } 
         });
+
+        // Notify admins via In-App Dashboard
+        notifyAdmins('Preuve de Paiement', `Une preuve de paiement a été soumise pour une échéance de la facture (Réf: ${installment.plan.invoice.invoiceNumber}). Veuillez vérifier.`);
 
         res.json({ message: 'Preuve soumise avec succès. En attente de validation.' });
 
