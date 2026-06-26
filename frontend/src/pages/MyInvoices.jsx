@@ -6,6 +6,102 @@ import EngagementDocument from '../components/EngagementDocument';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
+const renderProgressStepper = (status) => {
+  const steps = [
+    { label: 'Soumise', active: true, color: 'var(--success)' },
+    { label: 'Approuvée', active: ['APPROVED', 'FEE_VERIFYING', 'READY_TO_PAY', 'PAID', 'FULLY_REPAID'].includes(status) },
+    { label: 'Frais Réglés', active: ['READY_TO_PAY', 'PAID', 'FULLY_REPAID'].includes(status) },
+    { label: 'Financée', active: ['PAID', 'FULLY_REPAID'].includes(status) },
+    { label: 'Remboursée', active: status === 'FULLY_REPAID' }
+  ];
+
+  if (status === 'REJECTED') {
+    steps[1] = { label: 'Rejetée', active: true, error: true, color: 'var(--danger)' };
+  } else if (status === 'INFO_REQUIRED') {
+    steps[1] = { label: 'Doc Requis', active: true, warning: true, color: '#f59e0b' };
+  } else if (status === 'FEE_VERIFYING') {
+    steps[2] = { label: 'Frais en cours', active: true, warning: true, color: '#f8961e' };
+  }
+
+  return (
+    <div className="mb-4" style={{ padding: '20px 15px', background: 'var(--surface-light)', borderRadius: 'var(--border-radius)', border: '1px solid var(--border-color)' }}>
+      <h4 style={{ margin: '0 0 15px 0', fontSize: '0.9rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        Suivi de financement
+      </h4>
+      <div style={{ display: 'flex', alignItems: 'center', position: 'relative', justifyContent: 'space-between', width: '100%', maxWidth: '600px', margin: '0 auto' }}>
+        
+        {/* Connecting Lines background */}
+        <div style={{ position: 'absolute', top: '16px', left: '20px', right: '20px', height: '3px', background: 'var(--border-color)', zIndex: 0 }}></div>
+        
+        {/* Active Line indicator */}
+        {(() => {
+          const activeIndex = steps.reduce((max, step, idx) => step.active && !step.warning && !step.error ? idx : max, 0);
+          const percentage = (activeIndex / (steps.length - 1)) * 100;
+          return (
+            <div style={{ 
+              position: 'absolute', top: '16px', left: '20px', 
+              width: `calc(${percentage}% - 40px)`, height: '3px', 
+              background: 'var(--primary)', zIndex: 1,
+              transition: 'width 0.3s ease'
+            }}></div>
+          );
+        })()}
+
+        {steps.map((step, idx) => {
+          let dotBg = 'var(--border-color)';
+          let dotBorder = '3px solid var(--border-color)';
+          let labelColor = 'var(--text-muted)';
+          let labelWeight = 'normal';
+
+          if (step.active) {
+            dotBg = step.color || 'var(--primary)';
+            dotBorder = `3px solid ${step.color || 'var(--primary)'}`;
+            labelColor = 'var(--text-main)';
+            labelWeight = '600';
+          }
+
+          if (step.warning) {
+            dotBg = '#f59e0b';
+            dotBorder = '3px solid #f59e0b';
+            labelColor = '#d97706';
+            labelWeight = '600';
+          }
+
+          if (step.error) {
+            dotBg = 'var(--danger)';
+            dotBorder = '3px solid var(--danger)';
+            labelColor = 'var(--danger)';
+            labelWeight = '600';
+          }
+
+          return (
+            <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 2, flex: 1 }}>
+              <div style={{ 
+                width: '32px', height: '32px', borderRadius: '50%', 
+                background: step.active ? dotBg : 'var(--surface-light)', 
+                border: dotBorder,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: step.active ? 'white' : 'var(--text-muted)',
+                fontSize: '0.85rem', fontWeight: 'bold',
+                boxShadow: step.active ? '0 0 10px rgba(67, 97, 238, 0.2)' : 'none'
+              }}>
+                {step.active && !step.warning && !step.error ? '✓' : idx + 1}
+              </div>
+              <span style={{ 
+                marginTop: '8px', fontSize: '0.75rem', 
+                color: labelColor, fontWeight: labelWeight,
+                textAlign: 'center', whiteSpace: 'nowrap'
+              }}>
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const MyInvoices = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -420,6 +516,7 @@ const MyInvoices = () => {
 
               {expandedId === invoice.id && (
                 <div style={{ borderTop: '1px solid var(--border-color)', padding: '20px', background: 'var(--surface-hover)' }}>
+                  {renderProgressStepper(invoice.status)}
                   <div className="grid-cols-2">
                     <div>
                       <h4 className="mb-2">{t('invoices.details', 'Détails de la demande')}</h4>

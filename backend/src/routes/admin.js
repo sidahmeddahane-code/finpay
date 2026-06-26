@@ -5,6 +5,7 @@ const { auth, isAdmin, isSuperAdmin } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { calculatePenalty } = require('../utils/penalty');
 const sendSms = require('../utils/sendSms');
+const sendEmail = require('../utils/sendEmail');
 
 const prisma = new PrismaClient();
 
@@ -231,6 +232,28 @@ router.post('/invoices/:invoiceId/review', auth, isAdmin, async (req, res) => {
             message: `FinPay: Votre facture (Réf: ${invoice.invoiceNumber}) a été ${status === 'APPROVED' ? 'APPROUVÉE ✅' : 'REFUSÉE ❌'}.`
         });
 
+        if (invoice.user.email) {
+            await sendEmail({
+                email: invoice.user.email,
+                subject: `FinPay — Votre facture a été ${status === 'APPROVED' ? 'approuvée' : 'refusée'}`,
+                html: `
+                    <div style="font-family:Arial,sans-serif;max-width:500px;margin:auto;padding:30px;border:1px solid #e0e0e0;border-radius:8px;text-align:center">
+                        <h2 style="color:#4361ee">FinPay</h2>
+                        <p>Votre demande de financement pour la facture <strong>Réf: ${invoice.invoiceNumber}</strong> a été :</p>
+                        <div style="font-size:1.8rem;font-weight:bold;color:${status === 'APPROVED' ? '#2ecc71' : '#ef233c'};margin:20px 0">
+                            ${status === 'APPROVED' ? 'APPROUVÉE ✅' : 'REFUSÉE ❌'}
+                        </div>
+                        <p style="color:#555;font-size:1rem">
+                            ${status === 'APPROVED' 
+                                ? "Félicitations ! Vous pouvez dès maintenant vous connecter à votre espace citoyen pour valider votre plan d'échelonnement et procéder au règlement des frais initiaux." 
+                                : "Votre demande n'a pas pu être acceptée. Veuillez vous connecter à votre compte pour plus de détails ou contacter notre support."}
+                        </p>
+                        <p style="color:#888;font-size:0.85rem;margin-top:25px">Merci d'utiliser la plateforme citoyenne FinPay.</p>
+                    </div>
+                `
+            });
+        }
+
         await logAction(req.user.userId, req.user.name || 'Admin', status === 'APPROVED' ? 'APPROVE_INVOICE' : 'REJECT_INVOICE', 'INVOICE', invoiceId, `Réf: ${invoice.invoiceNumber}`);
 
         await prisma.notification.create({
@@ -243,6 +266,7 @@ router.post('/invoices/:invoiceId/review', auth, isAdmin, async (req, res) => {
 
         res.json({ message: `Facture ${status === 'APPROVED' ? 'approuvée' : 'refusée'}`, invoice });
     } catch (error) {
+        console.error('Erreur lors de la révision de la facture:', error);
         res.status(500).json({ error: 'Erreur révision facture.' });
     }
 });
